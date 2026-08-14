@@ -6,6 +6,7 @@ import PaperworkNavigator from './components/PaperworkNavigator';
 import NadraLocator from './components/NadraLocator';
 import PrintSummary from './components/PrintSummary';
 import DisclaimerFooter from './components/DisclaimerFooter';
+import WarisLegalChatbot from './components/WarisLegalChatbot';
 import { calculateInheritance, formatPKR } from './utils/inheritanceCalculator';
 import { translations } from './translations/translations';
 import {
@@ -355,6 +356,9 @@ export default function App() {
 
         {activeTab === 'locator' && <NadraLocator lang={lang} />}
       </main>
+
+      {/* Floating 24/7 AI Legal & Shariah Counsel Chatbot */}
+      <WarisLegalChatbot formData={formData} results={results} lang={lang} />
 
       {/* Printable Report View (Visible only during window.print()) */}
       <PrintSummary formData={formData} results={results} lang={lang} />
