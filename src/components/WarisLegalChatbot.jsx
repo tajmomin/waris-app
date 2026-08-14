@@ -222,6 +222,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
 
 export default function WarisLegalChatbot({ formData, results, lang }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([
@@ -237,6 +238,19 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const handleOpen = () => {
+    setIsClosing(false);
+    setIsOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+    }, 220);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -331,45 +345,50 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
   return (
     <div className="fixed bottom-5 right-5 z-50 no-print font-sans">
       {/* Floating Launcher Button */}
-      {!isOpen && (
+      {!isOpen && !isClosing && (
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-bold text-xs shadow-2xl border border-emerald-400/40 transition transform hover:scale-105 active:scale-95"
+          onClick={handleOpen}
+          className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-2xl border border-emerald-400/40 transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fade-in-scale animate-pulse-glow"
         >
-          <Bot className="w-4 h-4 text-white" />
-          <span className="hidden sm:inline">
-            {lang === 'ur' ? 'وارث اے آئی معاون' : 'Waris AI Legal Counsel'}
+          <div className="relative">
+            <Bot className="w-4 h-4 text-white group-hover:rotate-12 transition-transform duration-300" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+          </div>
+          <span className="hidden sm:inline tracking-wide">
+            {lang === 'ur' ? 'وارث اے آئی قانونی مشیر' : 'Waris AI Legal Counsel'}
           </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-300"></span>
         </button>
       )}
 
       {/* Modern Chat Window */}
-      {isOpen && (
+      {(isOpen || isClosing) && (
         <div
-          className={`flex flex-col bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-2xl transition-all duration-200 ${
+          className={`flex flex-col bg-slate-900/95 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isClosing ? 'animate-chatbot-exit pointer-events-none' : 'animate-chatbot-enter'
+          } ${
             isExpanded
-              ? 'fixed inset-4 sm:inset-10 z-50'
-              : 'w-[92vw] sm:w-[420px] h-[540px] max-h-[85vh]'
+              ? 'fixed inset-3 sm:inset-8 z-50 rounded-2xl shadow-emerald-950/40'
+              : 'w-[92vw] sm:w-[430px] h-[550px] max-h-[85vh]'
           }`}
         >
           {/* Clean Header */}
-          <div className="p-3.5 px-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+          <div className="p-3.5 px-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between backdrop-blur-md">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 transition-transform duration-300 hover:rotate-6">
                 <Scale className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
                   <span>{lang === 'ur' ? 'وارث اے آئی قانونی مشیر' : 'Waris AI Legal Counsel'}</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     ACTIVE
                   </span>
                 </h3>
                 <p className="text-[10px] text-slate-400">
-                  {lang === 'ur' ? 'شریعت و قانونی جانشینی ایکسپرٹ' : 'Shariah & Pakistani Succession Counsel'}
+                  {lang === 'ur' ? 'شریعت و پاکستانی جانشینی قوانین' : 'Shariah & Pakistani Succession Counsel'}
                 </p>
               </div>
             </div>
@@ -378,15 +397,16 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition"
+                className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition-colors duration-200"
                 title={isExpanded ? 'Minimize' : 'Maximize'}
               >
                 {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
               </button>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-white transition"
+                onClick={handleClose}
+                className="p-1.5 rounded-lg hover:bg-rose-950 hover:text-rose-300 transition-colors duration-200"
+                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -394,28 +414,28 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
           </div>
 
           {/* Quick Suggestion Chips */}
-          <div className="p-2 bg-slate-950/60 border-b border-slate-800/80 overflow-x-auto flex items-center gap-1.5 no-scrollbar text-[10.5px]">
+          <div className="p-2 bg-slate-950/70 border-b border-slate-800/80 overflow-x-auto flex items-center gap-1.5 no-scrollbar text-[10.5px]">
             <button
               onClick={() => handleSendMessage('Can a father disown a child through newspaper Aaq-Nama under Pakistani law?')}
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               ⚖️ Aaq-Nama Validity
             </button>
             <button
               onClick={() => handleSendMessage('What is Section 498-A PPC for female inheritance in Pakistan?')}
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               👩 Section 498A PPC
             </button>
             <button
               onClick={() => handleSendMessage('How do I apply for a NADRA Succession Certificate step by step?')}
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               📜 NADRA Steps
             </button>
             <button
               onClick={() => handleSendMessage('What is the breakdown of my current case?')}
-              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 shrink-0 transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               📊 My Case Summary
             </button>
@@ -426,23 +446,23 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2 animate-message-pop ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender === 'bot' && (
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] shrink-0 mt-0.5 shadow-sm">
                     🤖
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl leading-relaxed text-xs shadow-sm ${
+                  className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed text-xs shadow-md transition-all duration-200 ${
                     msg.sender === 'user'
-                      ? 'bg-emerald-600 text-white rounded-tr-none'
-                      : 'bg-slate-800/90 text-slate-200 border border-slate-700/60 rounded-tl-none'
+                      ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-tr-none'
+                      : 'bg-slate-800/95 text-slate-200 border border-slate-700/60 rounded-tl-none shadow-black/20'
                   }`}
                 >
                   <p className="whitespace-pre-line">{msg.text}</p>
-                  <span className="text-[9px] text-slate-400 block text-right mt-1 opacity-70">
+                  <span className="text-[9px] text-slate-400 block text-right mt-1.5 opacity-70">
                     {msg.timestamp}
                   </span>
                 </div>
@@ -450,9 +470,9 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
             ))}
 
             {isLoading && (
-              <div className="flex items-center gap-2 text-slate-400 text-xs p-2">
+              <div className="flex items-center gap-2 text-slate-400 text-xs p-2 animate-message-pop">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span>{lang === 'ur' ? 'قانونی رہنمائی تیار ہو رہی ہے...' : 'Analyzing case & generating legal guidance...'}</span>
+                <span>{lang === 'ur' ? 'قانونی تجزیہ تیار ہو رہا ہے...' : 'Analyzing case & generating legal guidance...'}</span>
               </div>
             )}
 
@@ -465,19 +485,19 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-2.5 bg-slate-900 border-t border-slate-800 flex items-center gap-2"
+            className="p-2.5 bg-slate-900/95 border-t border-slate-800 flex items-center gap-2"
           >
             <input
               type="text"
               placeholder={lang === 'ur' ? 'کوئی بھی سوال لکھیں (مثلاً: عاق نامہ، نادرا، بیوہ کا حصہ)...' : 'Ask any question (e.g., Aaq-Nama, NADRA, wife share)...'}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors duration-200"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition disabled:opacity-40"
+              className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 shadow-md"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

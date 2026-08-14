@@ -7,6 +7,7 @@
 @layer base {
   body {
     @apply bg-slate-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-emerald-500 selection:text-white;
+    overflow-x: hidden;
   }
 }
 
@@ -21,38 +22,173 @@
 
 /* Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #090d16;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: #1e293b;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #10b981;
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utilities */
 .glass-panel {
   background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel-emerald {
-  background: linear-gradient(135deg, rgba(6, 78, 59, 0.25) 0%, rgba(15, 23, 42, 0.85) 100%);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.28) 0%, rgba(15, 23, 42, 0.88) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.24);
 }
 
 .glass-panel-gold {
-  background: linear-gradient(135deg, rgba(184, 138, 41, 0.15) 0%, rgba(15, 23, 42, 0.85) 100%);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(212, 169, 72, 0.25);
+  background: linear-gradient(135deg, rgba(184, 138, 41, 0.18) 0%, rgba(15, 23, 42, 0.88) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 169, 72, 0.28);
+}
+
+/* Fluid Animation Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chatbotPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.75) translateY(35px);
+    transform-origin: bottom right;
+  }
+  70% {
+    transform: scale(1.02) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transform-origin: bottom right;
+  }
+}
+
+@keyframes chatbotPopOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transform-origin: bottom right;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(30px);
+    transform-origin: bottom right;
+  }
+}
+
+@keyframes messagePop {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes floatGently {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.55);
+  }
+}
+
+@keyframes shimmerWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Animation Utility Classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-chatbot-enter {
+  animation: chatbotPopIn 0.38s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+.animate-chatbot-exit {
+  animation: chatbotPopOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.animate-message-pop {
+  animation: messagePop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float-slow {
+  animation: floatGently 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+/* Smooth Interactive Card Hover */
+.interactive-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.interactive-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -10px rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+/* Smooth Tabs and Layout Transition */
+.tab-pane {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Print Stylesheet for clean official PDF / Printout */
