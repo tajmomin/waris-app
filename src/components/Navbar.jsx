@@ -3,11 +3,12 @@ import {
   Scale,
   Languages,
   Printer,
-  FileDown,
   Sparkles,
   BookOpen,
   CheckCircle2,
   FileSpreadsheet,
+  Navigation,
+  Compass,
 } from 'lucide-react';
 import { translations } from '../translations/translations';
 
@@ -22,12 +23,12 @@ export default function Navbar({
   const t = translations[lang];
 
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 shadow-lg backdrop-blur-md">
+    <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80 shadow-lg backdrop-blur-md no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center shadow-glow border border-emerald-400/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center shadow-glow border border-emerald-400/30 shrink-0">
               <Scale className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -50,10 +51,10 @@ export default function Navbar({
           </div>
 
           {/* Navigation Tabs (Desktop) */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
             <button
               onClick={() => setActiveTab('calculator')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'calculator'
                   ? 'bg-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -65,7 +66,7 @@ export default function Navbar({
 
             <button
               onClick={() => setActiveTab('results')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'results'
                   ? 'bg-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -77,7 +78,7 @@ export default function Navbar({
 
             <button
               onClick={() => setActiveTab('paperwork')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === 'paperwork'
                   ? 'bg-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -86,12 +87,24 @@ export default function Navbar({
               <BookOpen className="w-4 h-4" />
               {t.navPaperwork}
             </button>
+
+            <button
+              onClick={() => setActiveTab('locator')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                activeTab === 'locator'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              } ${lang === 'ur' ? 'urdu-text text-[13px] py-1' : ''}`}
+            >
+              <Compass className="w-4 h-4 text-teal-400" />
+              <span>{t.navLocator}</span>
+            </button>
           </nav>
 
           {/* Right actions: Preset Selector, Print, Lang toggle */}
           <div className="flex items-center gap-2">
             {/* Quick Test Presets Dropdown */}
-            <div className="relative group hidden lg:block">
+            <div className="relative group hidden sm:block">
               <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition">
                 <Sparkles className="w-3.5 h-3.5 text-gold-400" />
                 <span>{t.navTestCases}</span>
@@ -160,10 +173,10 @@ export default function Navbar({
         </div>
 
         {/* Mobile Navigation Tabs */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-slate-800/80">
+        <div className="flex lg:hidden items-center justify-around py-2 border-t border-slate-800/80 gap-1 overflow-x-auto">
           <button
             onClick={() => setActiveTab('calculator')}
-            className={`px-3 py-1 text-xs font-medium rounded-md ${
+            className={`px-2.5 py-1 text-xs font-medium rounded-md shrink-0 ${
               activeTab === 'calculator' ? 'bg-emerald-600 text-white' : 'text-slate-400'
             }`}
           >
@@ -171,7 +184,7 @@ export default function Navbar({
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`px-3 py-1 text-xs font-medium rounded-md ${
+            className={`px-2.5 py-1 text-xs font-medium rounded-md shrink-0 ${
               activeTab === 'results' ? 'bg-emerald-600 text-white' : 'text-slate-400'
             }`}
           >
@@ -179,11 +192,19 @@ export default function Navbar({
           </button>
           <button
             onClick={() => setActiveTab('paperwork')}
-            className={`px-3 py-1 text-xs font-medium rounded-md ${
+            className={`px-2.5 py-1 text-xs font-medium rounded-md shrink-0 ${
               activeTab === 'paperwork' ? 'bg-emerald-600 text-white' : 'text-slate-400'
             }`}
           >
             {lang === 'ur' ? '3. انتقالِ اراضی' : '3. Paperwork'}
+          </button>
+          <button
+            onClick={() => setActiveTab('locator')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-md shrink-0 ${
+              activeTab === 'locator' ? 'bg-emerald-600 text-white' : 'text-slate-400'
+            }`}
+          >
+            {lang === 'ur' ? '4. نادرا مراکز' : '4. Locator'}
           </button>
         </div>
       </div>

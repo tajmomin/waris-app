@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import FamilyInputForm from './components/FamilyInputForm';
 import ResultsView from './components/ResultsView';
 import PaperworkNavigator from './components/PaperworkNavigator';
+import NadraLocator from './components/NadraLocator';
 import PrintSummary from './components/PrintSummary';
 import DisclaimerFooter from './components/DisclaimerFooter';
 import { calculateInheritance } from './utils/inheritanceCalculator';
@@ -13,6 +14,7 @@ import {
   BookOpen,
   Scale,
   ArrowRight,
+  Compass,
 } from 'lucide-react';
 
 const initialFormData = {
@@ -40,13 +42,13 @@ const initialFormData = {
 
 export default function App() {
   const [lang, setLang] = useState('en');
-  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'results' | 'paperwork'
+  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'results' | 'paperwork' | 'locator'
   const [formData, setFormData] = useState(initialFormData);
   const [results, setResults] = useState(null);
 
   const t = translations[lang];
 
-  // Perform calculation automatically on mount or when requested
+  // Perform calculation automatically on mount or when form values change
   useEffect(() => {
     const res = calculateInheritance(formData);
     setResults(res);
@@ -86,7 +88,6 @@ export default function App() {
 
   const handleSelectPreset = (presetKey) => {
     if (presetKey === 'standard') {
-      // Wife + 2 Sons + 1 Daughter
       setFormData({
         ...initialFormData,
         deceasedGender: 'male',
@@ -99,7 +100,6 @@ export default function App() {
         grossEstate: 10000000,
       });
     } else if (presetKey === 'parents_spouse') {
-      // Husband + Mother + Father (Gharawayn)
       setFormData({
         ...initialFormData,
         deceasedGender: 'female',
@@ -112,7 +112,6 @@ export default function App() {
         grossEstate: 6000000,
       });
     } else if (presetKey === 'daughters_brother') {
-      // Wife + 2 Daughters + 1 Brother
       setFormData({
         ...initialFormData,
         deceasedGender: 'male',
@@ -126,7 +125,6 @@ export default function App() {
         grossEstate: 12000000,
       });
     } else if (presetKey === 'awl') {
-      // Husband + Mother + 2 Full Sisters (Awl Case)
       setFormData({
         ...initialFormData,
         deceasedGender: 'female',
@@ -140,7 +138,6 @@ export default function App() {
         grossEstate: 8000000,
       });
     } else if (presetKey === 'radd') {
-      // Mother + 1 Daughter (Radd Case)
       setFormData({
         ...initialFormData,
         deceasedGender: 'male',
@@ -203,8 +200,8 @@ export default function App() {
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               {lang === 'ur'
-                ? 'متوفی کے ترکے کی شرعی تقسیم، حسابی گوشوارہ، اور پنجاب، سندھ، کے پی کے، بلوچستان و اسلام آباد میں انتقالِ اراضی کا مستند طریقہ کار۔'
-                : 'Calculate precise Islamic estate shares according to classical Hanafi Fara’iz rules, and navigate province-specific mutation (Intiqal), NADRA succession, and land administration steps.'}
+                ? 'متوفی کے ترکے کی شرعی تقسیم، حسابی گوشوارہ، قریبی نادرا جانشینی سینٹرز، اور صوبائی انتقالِ اراضی کا مستند طریقہ کار۔'
+                : 'Calculate precise Islamic estate shares according to classical Hanafi Fara’iz rules, locate nearest NADRA Succession Centers, and navigate provincial mutation (Intiqal) paperwork.'}
             </p>
 
             {/* Tab Switcher Pills */}
@@ -246,6 +243,19 @@ export default function App() {
               >
                 <BookOpen className="w-4 h-4" />
                 <span>{t.navPaperwork}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('locator')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  activeTab === 'locator'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
+                }`}
+              >
+                <Compass className="w-4 h-4 text-teal-400" />
+                <span>{t.navLocator}</span>
               </button>
             </div>
           </div>
@@ -343,6 +353,8 @@ export default function App() {
         {activeTab === 'paperwork' && (
           <PaperworkNavigator lang={lang} onPrint={handlePrint} />
         )}
+
+        {activeTab === 'locator' && <NadraLocator lang={lang} />}
       </main>
 
       {/* Printable Report View (Visible only during window.print()) */}

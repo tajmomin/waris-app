@@ -6,7 +6,7 @@ export const translations = {
   en: {
     appTitle: 'WARIS',
     appSubtitle: 'Islamic Inheritance & Property Paperwork Navigator for Pakistani Families',
-    appTagline: 'Sunni / Hanafi Fara’iz Calculator • Province-wise Property Mutation (Intiqal) Guide',
+    appTagline: 'Sunni / Hanafi Fara’iz Calculator • Province-wise Property Mutation (Intiqal) & NADRA Locator',
     langToggle: 'اردو',
     legalDisclaimerHeader: 'Islamic Jurisprudence & Legal Disclaimer',
     legalDisclaimerBody:
@@ -14,6 +14,7 @@ export const translations = {
     navCalculator: '1. Family & Estate Calculator',
     navResults: '2. Inheritance Results & Visualizer',
     navPaperwork: '3. Property Paperwork Navigator',
+    navLocator: '4. Nearest NADRA Centers',
     navTestCases: 'Quick Test Presets',
     btnCalculate: 'Calculate Islamic Shares',
     btnReset: 'Reset Form',
@@ -106,7 +107,7 @@ export const translations = {
   ur: {
     appTitle: 'وارث',
     appSubtitle: 'پاکستانی خاندانوں کے لیے اسلامی وراثت اور جائیداد کے قانونی انتقال کا رہنماء',
-    appTagline: 'حنفی فقہ کے مطابق فرائض کا حسابی نظام • صوبہ وار انتقال اراضی و نادرا کا مکمل طریقہ کار',
+    appTagline: 'حنفی فقہ کے مطابق فرائض کا حسابی نظام • صوبہ وار انتقال اراضی و قریبی نادرا مراکز',
     langToggle: 'English',
     legalDisclaimerHeader: 'شرعی و قانونی تنبیہ (ڈسکلیمر)',
     legalDisclaimerBody:
@@ -114,6 +115,7 @@ export const translations = {
     navCalculator: '1. خاندانی معلومات اور ترکہ',
     navResults: '2. شرعی حصص اور گرافکس',
     navPaperwork: '3. انتقالِ جائیداد و کاغذی رہنماء',
+    navLocator: '4. قریبی نادرا سینٹرز (لوکیشن)',
     navTestCases: 'مروجہ خاندانی مثالیں (ٹیسٹ پری سیٹس)',
     btnCalculate: 'شرعی حصص کا حساب لگائیں',
     btnReset: 'فارم ری سیٹ کریں',
