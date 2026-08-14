@@ -28,6 +28,7 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
   // Extract Heirs
   const wife = findHeir('wife');
   const husband = findHeir('husband');
+  const spouse = wife || husband;
   const mother = findHeir('mother');
   const father = findHeir('father') || findHeir('father_fard') || findHeir('father_pure_asabah');
   const dadi = findHeir('paternalGrandmother');
@@ -43,13 +44,29 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
   const blockedNani = isBlocked('maternalGrandmother');
   const blockedSiblings = isBlocked('fullSiblings');
 
-  const hasParents = father || mother;
-  const hasGrandparents = dada || dadi || nani || blockedDada || blockedDadi || blockedNani;
-  const hasChildren = sons || daughters;
-  const hasSiblings = brothers || sisters || blockedSiblings;
+  const grandParentsList = [
+    dada && { ...dada, relationTitle: lang === 'ur' ? 'دادا (Dada)' : 'Paternal Grandfather' },
+    dadi && { ...dadi, relationTitle: lang === 'ur' ? 'دادی (Dadi)' : 'Paternal Grandmother' },
+    nani && { ...nani, relationTitle: lang === 'ur' ? 'نانی (Nani)' : 'Maternal Grandmother' },
+  ].filter(Boolean);
 
-  // Sleek Node Component
-  const TreeNode = ({
+  const parentsList = [
+    father && { ...father, relationTitle: lang === 'ur' ? 'والد صاحب (Father)' : 'Father (Walid)' },
+    mother && { ...mother, relationTitle: lang === 'ur' ? 'والدہ صاحبہ (Mother)' : 'Mother (Walidah)' },
+  ].filter(Boolean);
+
+  const childrenList = [
+    sons && { ...sons, relationTitle: lang === 'ur' ? sons.nameUr : sons.nameEn },
+    daughters && { ...daughters, relationTitle: lang === 'ur' ? daughters.nameUr : daughters.nameEn },
+  ].filter(Boolean);
+
+  const siblingsList = [
+    brothers && { ...brothers, relationTitle: lang === 'ur' ? brothers.nameUr : brothers.nameEn },
+    sisters && { ...sisters, relationTitle: lang === 'ur' ? sisters.nameUr : sisters.nameEn },
+  ].filter(Boolean);
+
+  // Clean, modern Card Component with exact dimensions for predictable tree alignment
+  const TreeCard = ({
     name,
     relation,
     fraction,
@@ -70,7 +87,7 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
     let badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
     if (isDeceased) {
-      borderClass = 'border-amber-500/40 bg-gradient-to-b from-slate-900 via-slate-900 to-amber-950/30 ring-1 ring-amber-500/30';
+      borderClass = 'border-amber-500/40 bg-gradient-to-b from-slate-900 via-slate-900 to-amber-950/20 ring-1 ring-amber-500/20';
       badgeClass = 'bg-amber-500/10 text-amber-300 border-amber-500/20';
     } else if (isSpouse) {
       borderClass = 'border-teal-500/40 bg-slate-900/90 hover:border-teal-500/60';
@@ -101,14 +118,14 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
         }
         className={`relative cursor-pointer select-none rounded-2xl border ${borderClass} ${
           isSelected ? 'ring-2 ring-emerald-400 shadow-xl' : ''
-        } p-4 w-60 shadow-lg backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5`}
+        } p-4 w-64 shadow-lg backdrop-blur-md transition-all duration-150 hover:-translate-y-0.5 z-10`}
       >
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass}`}>
             {isDeceased
               ? lang === 'ur' ? 'متوفی' : 'Deceased'
               : isBlockedNode
-              ? lang === 'ur' ? 'حجب (محروم)' : 'Excluded (Mahjoob)'
+              ? lang === 'ur' ? 'حجب (محروم)' : 'Excluded'
               : `${fraction} • ${percent}%`}
           </span>
 
@@ -163,147 +180,63 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
     <div className="space-y-6">
       {/* Clean Tree Canvas Container */}
       <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-slate-800/90 overflow-x-auto relative shadow-2xl">
-        <div className="min-w-[760px] flex flex-col items-center space-y-8 py-2">
+        <div className="min-w-[720px] flex flex-col items-center py-4 space-y-0">
 
-          {/* ================= LEVEL 1: GRANDPARENTS (If surviving/relevant) ================= */}
-          {hasGrandparents && (
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex items-center gap-6">
-                {(dada || blockedDada) && (
-                  <TreeNode
-                    name={lang === 'ur' ? 'دادا (Dada)' : 'Paternal Grandfather'}
-                    relation={lang === 'ur' ? 'باپ کا باپ' : 'Paternal Grandfather'}
-                    fraction={dada?.fractionFormatted}
-                    percent={dada?.percentage}
-                    pkr={dada?.totalPkr}
-                    category={dada?.category}
-                    type={dada ? 'heir' : 'blocked'}
+          {/* ================= LEVEL 1: GRANDPARENTS ================= */}
+          {grandParentsList.length > 0 && (
+            <div className="flex flex-col items-center">
+              <div className="flex items-center justify-center gap-8">
+                {grandParentsList.map((g, idx) => (
+                  <TreeCard
+                    key={idx}
+                    name={g.relationTitle}
+                    relation={lang === 'ur' ? 'اجداد' : 'Grandparent'}
+                    fraction={g.fractionFormatted}
+                    percent={g.percentage}
+                    pkr={g.totalPkr}
+                    category={g.category}
+                    type="heir"
                     quranRef="Hadith / Sunnah"
-                    ruleText={dada?.ruleEn || blockedDada?.reasonEn}
+                    ruleText={g.ruleEn}
                   />
-                )}
-
-                {(dadi || blockedDadi) && (
-                  <TreeNode
-                    name={lang === 'ur' ? 'دادی (Dadi)' : 'Paternal Grandmother'}
-                    relation={lang === 'ur' ? 'باپ کی ماں' : 'Paternal Grandmother'}
-                    fraction={dadi?.fractionFormatted}
-                    percent={dadi?.percentage}
-                    pkr={dadi?.totalPkr}
-                    category={dadi?.category}
-                    type={dadi ? 'heir' : 'blocked'}
-                    quranRef="Sunan Abi Dawud"
-                    ruleText={dadi?.ruleEn || blockedDadi?.reasonEn}
-                  />
-                )}
-
-                {(nani || blockedNani) && (
-                  <TreeNode
-                    name={lang === 'ur' ? 'نانی (Nani)' : 'Maternal Grandmother'}
-                    relation={lang === 'ur' ? 'ماں کی ماں' : 'Maternal Grandmother'}
-                    fraction={nani?.fractionFormatted}
-                    percent={nani?.percentage}
-                    pkr={nani?.totalPkr}
-                    category={nani?.category}
-                    type={nani ? 'heir' : 'blocked'}
-                    quranRef="Sunan Abi Dawud"
-                    ruleText={nani?.ruleEn || blockedNani?.reasonEn}
-                  />
-                )}
+                ))}
               </div>
 
-              {/* Vertical Branch Line */}
-              <div className="w-px h-6 bg-slate-700"></div>
+              {/* Connected vertical trunk to parents */}
+              <div className="w-0.5 h-10 bg-slate-700"></div>
             </div>
           )}
 
           {/* ================= LEVEL 2: PARENTS ================= */}
-          {hasParents && (
-            <div className="flex flex-col items-center space-y-4">
-              <div className="flex items-center gap-8">
-                {father && (
-                  <TreeNode
-                    name={lang === 'ur' ? 'والد صاحب (Father)' : 'Father (Walid)'}
-                    relation={lang === 'ur' ? 'والد' : 'Father'}
-                    fraction={father.fractionFormatted}
-                    percent={father.percentage}
-                    pkr={father.totalPkr}
-                    category={father.category}
+          {parentsList.length > 0 && (
+            <div className="flex flex-col items-center">
+              <div className="flex items-center justify-center gap-8">
+                {parentsList.map((p, idx) => (
+                  <TreeCard
+                    key={idx}
+                    name={p.relationTitle}
+                    relation={lang === 'ur' ? 'والدین' : 'Parent'}
+                    fraction={p.fractionFormatted}
+                    percent={p.percentage}
+                    pkr={p.totalPkr}
+                    category={p.category}
                     type="heir"
                     quranRef="Surah An-Nisa (4:11)"
-                    ruleText={father.ruleEn}
+                    ruleText={p.ruleEn}
                   />
-                )}
-
-                {mother && (
-                  <TreeNode
-                    name={lang === 'ur' ? 'والدہ صاحبہ (Mother)' : 'Mother (Walidah)'}
-                    relation={lang === 'ur' ? 'والدہ' : 'Mother'}
-                    fraction={mother.fractionFormatted}
-                    percent={mother.percentage}
-                    pkr={mother.totalPkr}
-                    category={mother.category}
-                    type="heir"
-                    quranRef="Surah An-Nisa (4:11)"
-                    ruleText={mother.ruleEn}
-                  />
-                )}
+                ))}
               </div>
 
-              {/* Vertical Branch Line */}
-              <div className="w-px h-8 bg-slate-700"></div>
+              {/* Connected vertical trunk to primary tier */}
+              <div className="w-0.5 h-10 bg-slate-700"></div>
             </div>
           )}
 
-          {/* ================= LEVEL 3: DECEASED & SPOUSE & SIBLINGS ================= */}
-          <div className="flex flex-col items-center space-y-6 w-full">
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              {/* Siblings Collateral Branch */}
-              {hasSiblings && (
-                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-950/40 border border-slate-800/80">
-                  {brothers && (
-                    <TreeNode
-                      name={lang === 'ur' ? brothers.nameUr : brothers.nameEn}
-                      relation={lang === 'ur' ? 'سگے بھائی' : 'Full Brothers'}
-                      fraction={brothers.fractionFormatted}
-                      percent={brothers.percentage}
-                      pkr={brothers.totalPkr}
-                      count={brothers.count}
-                      category={brothers.category}
-                      type="heir"
-                      quranRef="Surah An-Nisa (4:176)"
-                      ruleText={brothers.ruleEn}
-                    />
-                  )}
-
-                  {sisters && (
-                    <TreeNode
-                      name={lang === 'ur' ? sisters.nameUr : sisters.nameEn}
-                      relation={lang === 'ur' ? 'سگی بہنیں' : 'Full Sisters'}
-                      fraction={sisters.fractionFormatted}
-                      percent={sisters.percentage}
-                      pkr={sisters.totalPkr}
-                      count={sisters.count}
-                      category={sisters.category}
-                      type="heir"
-                      quranRef="Surah An-Nisa (4:176)"
-                      ruleText={sisters.ruleEn}
-                    />
-                  )}
-
-                  {blockedSiblings && !brothers && !sisters && (
-                    <TreeNode
-                      name={lang === 'ur' ? 'بہن بھائی' : 'Full Siblings'}
-                      relation={lang === 'ur' ? 'سگے بہن بھائی' : 'Siblings'}
-                      type="blocked"
-                      ruleText={blockedSiblings.reasonEn}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* The Deceased Core Node */}
-              <TreeNode
+          {/* ================= LEVEL 3: PRIMARY TIER (DECEASED & SPOUSE) ================= */}
+          <div className="flex flex-col items-center relative">
+            <div className="flex items-center justify-center relative">
+              {/* Deceased Card */}
+              <TreeCard
                 name={
                   formData.deceasedGender === 'male'
                     ? lang === 'ur' ? 'مرحوم والد / شوہر' : 'Deceased (Male)'
@@ -314,85 +247,109 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
                 ruleText="The deceased whose estate is distributed among legal heirs in accordance with Sunni/Hanafi Fara'iz jurisprudence."
               />
 
-              {/* Marriage Connector Line & Spouse */}
-              {wife && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-px bg-teal-500/40"></div>
-                  <TreeNode
-                    name={lang === 'ur' ? wife.nameUr : wife.nameEn}
-                    relation={lang === 'ur' ? 'شریکِ حیات' : 'Wife / Widow'}
-                    fraction={wife.fractionFormatted}
-                    percent={wife.percentage}
-                    pkr={wife.totalPkr}
-                    count={wife.count}
-                    category={wife.category}
-                    type="spouse"
-                    quranRef="Surah An-Nisa (4:12)"
-                    ruleText={wife.ruleEn}
-                  />
-                </div>
-              )}
+              {/* Seamless Marriage Bridge & Spouse */}
+              {spouse ? (
+                <>
+                  {/* Continuous Horizontal Marriage Line with Center Junction Dot */}
+                  <div className="w-16 h-0.5 bg-teal-500/70 relative flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-teal-400 ring-2 ring-slate-900 z-20"></div>
+                  </div>
 
-              {husband && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-px bg-teal-500/40"></div>
-                  <TreeNode
-                    name={lang === 'ur' ? 'شوہر (Shohar)' : 'Husband'}
-                    relation={lang === 'ur' ? 'شریکِ حیات' : 'Surviving Husband'}
-                    fraction={husband.fractionFormatted}
-                    percent={husband.percentage}
-                    pkr={husband.totalPkr}
-                    count={1}
-                    category={husband.category}
+                  <TreeCard
+                    name={
+                      wife
+                        ? lang === 'ur' ? wife.nameUr : wife.nameEn
+                        : lang === 'ur' ? 'شوہر (Shohar)' : 'Husband'
+                    }
+                    relation={lang === 'ur' ? 'شریکِ حیات' : 'Surviving Spouse'}
+                    fraction={spouse.fractionFormatted}
+                    percent={spouse.percentage}
+                    pkr={spouse.totalPkr}
+                    count={spouse.count || 1}
+                    category={spouse.category}
                     type="spouse"
                     quranRef="Surah An-Nisa (4:12)"
-                    ruleText={husband.ruleEn}
+                    ruleText={spouse.ruleEn}
                   />
-                </div>
-              )}
+                </>
+              ) : null}
             </div>
 
-            {/* Branching down to children */}
-            {hasChildren && (
-              <div className="flex flex-col items-center">
-                <div className="w-px h-8 bg-slate-700"></div>
-                <div className="w-32 h-px bg-slate-700"></div>
+            {/* ================= CONTINUOUS CONNECTION TO CHILDREN ================= */}
+            {childrenList.length > 0 && (
+              <div className="flex flex-col items-center w-full">
+                {/* 1. Vertical line dropping from the center of marriage (or deceased if no spouse) */}
+                <div className="w-0.5 h-8 bg-slate-600"></div>
+
+                {childrenList.length === 1 ? (
+                  // Single child: Straight vertical line into child
+                  <div className="w-0.5 h-6 bg-slate-600"></div>
+                ) : (
+                  // Multiple children (e.g. Sons + Daughters): Seamless Tee-Junction Fork
+                  <div className="relative w-80 h-8 flex items-center justify-center">
+                    {/* Horizontal Bus spanning exactly across children */}
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-slate-600 rounded-full"></div>
+
+                    {/* Center junction dot */}
+                    <div className="absolute top-[-3px] w-2 h-2 rounded-full bg-slate-400 z-10"></div>
+
+                    {/* Left Drop to Child 1 */}
+                    <div className="absolute top-0 left-0 w-0.5 h-8 bg-slate-600"></div>
+
+                    {/* Right Drop to Child 2 */}
+                    <div className="absolute top-0 right-0 w-0.5 h-8 bg-slate-600"></div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* ================= LEVEL 4: CHILDREN / DESCENDANTS ================= */}
-          {hasChildren && (
-            <div className="flex items-center justify-center gap-8 pt-2">
-              {sons && (
-                <TreeNode
-                  name={lang === 'ur' ? sons.nameUr : sons.nameEn}
-                  relation={lang === 'ur' ? 'صلبی بیٹے (2 حصے)' : 'Sons (2x Asabah)'}
-                  fraction={sons.fractionFormatted}
-                  percent={sons.percentage}
-                  pkr={sons.totalPkr}
-                  count={sons.count}
-                  category={sons.category}
+          {childrenList.length > 0 && (
+            <div className="flex items-center justify-center gap-16">
+              {childrenList.map((c, idx) => (
+                <TreeCard
+                  key={idx}
+                  name={c.relationTitle}
+                  relation={
+                    c.id === 'sons'
+                      ? lang === 'ur' ? 'صلبی بیٹے (2 حصے)' : 'Sons (2x Asabah)'
+                      : lang === 'ur' ? 'صلبی بیٹیاں (1 حصہ)' : 'Daughters (1x Share)'
+                  }
+                  fraction={c.fractionFormatted}
+                  percent={c.percentage}
+                  pkr={c.totalPkr}
+                  count={c.count}
+                  category={c.category}
                   type="heir"
                   quranRef="Surah An-Nisa (4:11)"
-                  ruleText={sons.ruleEn}
+                  ruleText={c.ruleEn}
                 />
-              )}
+              ))}
+            </div>
+          )}
 
-              {daughters && (
-                <TreeNode
-                  name={lang === 'ur' ? daughters.nameUr : daughters.nameEn}
-                  relation={lang === 'ur' ? 'صلبی بیٹیاں (1 حصہ)' : 'Daughters (1x share)'}
-                  fraction={daughters.fractionFormatted}
-                  percent={daughters.percentage}
-                  pkr={daughters.totalPkr}
-                  count={daughters.count}
-                  category={daughters.category}
-                  type="heir"
-                  quranRef="Surah An-Nisa (4:11)"
-                  ruleText={daughters.ruleEn}
-                />
-              )}
+          {/* ================= SIBLINGS SECTION (If present and no children/father) ================= */}
+          {siblingsList.length > 0 && (
+            <div className="flex flex-col items-center pt-8">
+              <div className="w-0.5 h-6 bg-slate-700"></div>
+              <div className="flex items-center justify-center gap-8">
+                {siblingsList.map((s, idx) => (
+                  <TreeCard
+                    key={idx}
+                    name={s.relationTitle}
+                    relation={lang === 'ur' ? 'سگے بہن بھائی' : 'Surviving Sibling'}
+                    fraction={s.fractionFormatted}
+                    percent={s.percentage}
+                    pkr={s.totalPkr}
+                    count={s.count}
+                    category={s.category}
+                    type="heir"
+                    quranRef="Surah An-Nisa (4:176)"
+                    ruleText={s.ruleEn}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
