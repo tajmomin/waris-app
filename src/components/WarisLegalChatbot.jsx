@@ -7,7 +7,6 @@ import {
   Bot,
   User,
   Scale,
-  BookOpen,
   Maximize2,
   Minimize2,
   RefreshCcw,
@@ -24,8 +23,8 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
       sender: 'bot',
       text:
         lang === 'ur'
-          ? 'السلام علیکم! میں وارث اے آئی قانونی اور شرعی معاون ہوں۔ آپ اسلامی وراثت، نادرا جانشینی سرٹیفکیٹ یا اراضی کے انتقال سے متعلق کچھ بھی پوچھ سکتے ہیں۔'
-          : 'As-salamu alaykum! I am Waris AI — your Islamic Inheritance Jurisprudence & Pakistani Legal Assistant. Ask me anything about Fara’iz shares, NADRA certificates, or land mutation.',
+          ? 'السلام علیکم! میں وارث اے آئی قانونی اور شرعی مشیر ہوں۔ آپ اسلامی وراثت، نادرا جانشینی سرٹیفکیٹ یا اراضی کے انتقال سے متعلق کوئی بھی سوال پوچھ سکتے ہیں۔'
+          : 'As-salamu alaykum! I am Waris AI — an AI Legal & Shariah Counsel powered by real-time LLM inference. Ask me any question about Fara’iz shares, NADRA succession, or land mutation.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -42,25 +41,7 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
     }
   }, [messages, isOpen]);
 
-  // System Prompt with full domain context & active calculation
-  const buildSystemPrompt = () => {
-    const estateContext =
-      results && results.heirsList && results.heirsList.length > 0
-        ? `Current active estate: Net PKR ${results.netEstate}, Status: ${results.status}, Heirs: ${results.heirsList
-            .map((h) => `${h.nameEn} (${h.fractionFormatted})`)
-            .join(', ')}.`
-        : 'No estate calculation active yet.';
-
-    return `You are Waris AI, an expert, polite Islamic Inheritance (Sunni/Hanafi Fara'iz) scholar and Pakistani Succession Law advocate (covering NADRA Succession Certificates Act 2021, Section 498-A PPC against female deprivation, PLRA/Patwari mutation, MFLO Section 4 orphan grandchildren, and Aaq-nama invalidity).
-Context: ${estateContext}
-Language preference: ${lang === 'ur' ? 'Urdu' : 'English'}.
-Guidelines:
-1. If the user greets (Hi, Hello, Salam, etc.), greet them warmly and politely.
-2. Answer questions concisely, conversationally, and accurately with legal/Shariah basis when relevant.
-3. Keep responses clean, well-formatted, and easy to read (max 2-3 short paragraphs).`;
-  };
-
-  // Real AI API Call
+  // Real LLM API Inference Call
   const handleSendMessage = async (textToSend) => {
     const query = (textToSend || inputMessage).trim();
     if (!query || isLoading) return;
@@ -77,78 +58,50 @@ Guidelines:
     setIsLoading(true);
 
     try {
-      // Free, high-speed, CORS-friendly Real AI API (Pollinations.ai / OpenAI compatible)
-      const systemPrompt = buildSystemPrompt();
-      const conversationHistory = messages.slice(-4).map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text,
-      }));
+      const activeEstate =
+        results && results.heirsList && results.heirsList.length > 0
+          ? `Active User Estate: Net PKR ${results.netEstate}, Status: ${results.status}, Heirs: ${results.heirsList
+              .map((h) => `${h.nameEn} (${h.fractionFormatted})`)
+              .join(', ')}.`
+          : 'No calculation entered yet.';
 
-      const res = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: query },
-          ],
-          model: 'openai',
-          seed: 42,
-          temperature: 0.7,
-        }),
-      });
+      const promptContext = `You are Waris AI, a world-class Islamic Inheritance Jurisprudence (Sunni/Hanafi Fara'iz) scholar and Pakistani Succession Law advocate (familiar with NADRA Succession Act 2021, Section 498-A PPC, PLRA Land Revenue mutation, and Supreme Court of Pakistan rulings).
+Context: ${activeEstate}
+User Language: ${lang === 'ur' ? 'Urdu' : 'English'}.
+User Message: "${query}"
 
-      let botText = '';
-      if (res.ok) {
-        botText = await res.text();
+Respond concisely, accurately, and naturally in 1-3 short paragraphs in ${lang === 'ur' ? 'Urdu' : 'English'}.`;
+
+      // Call Real LLM API Endpoint
+      const response = await fetch(
+        `https://text.pollinations.ai/${encodeURIComponent(promptContext)}?model=openai&system=${encodeURIComponent(
+          'You are Waris AI, a certified Pakistani succession lawyer and Hanafi Islamic jurisprudence expert.'
+        )}`
+      );
+
+      let aiResponse = '';
+      if (response.ok) {
+        aiResponse = await response.text();
       } else {
-        throw new Error('API offline');
+        throw new Error('LLM API error');
       }
 
       const botMsg = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: botText.trim(),
+        text: aiResponse.trim(),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, botMsg]);
-    } catch (error) {
-      // Natural fallback if external network is slow
-      let fallbackText = '';
-      const q = query.toLowerCase();
-
-      if (q === 'hi' || q === 'hello' || q === 'hey' || q.includes('salam')) {
-        fallbackText =
-          lang === 'ur'
-            ? 'وعلیکم السلام! میں آپ کی کیا مدد کر سکتا ہوں؟ آپ وراثت کی تقسیم، نادرا سرٹیفکیٹ یا اراضی کے انتقال کے بارے میں پوچھ سکتے ہیں۔'
-            : 'As-salamu alaykum! How can I help you today? Feel free to ask any question regarding Islamic inheritance, NADRA succession certificates, or property mutation.';
-      } else if (q.includes('aaq') || q.includes('disown') || q.includes('عاق')) {
-        fallbackText =
-          lang === 'ur'
-            ? 'اخبار میں عاق نامہ چھپوانے کی کوئی قانونی یا شرعی حیثیت نہیں ہے۔ باپ اپنی زندگی میں کسی جائز اولاد کو شرعی وراثت سے محروم نہیں کر سکتا (سپریم کورٹ فیصلہ: PLD 1991 SC 731)۔'
-            : 'Publishing an "Aaq-Nama" in newspapers has ZERO legal validity under Islamic law and Pakistani courts (PLD 1991 SC 731). Biological children cannot be disowned from mandatory Quranic inheritance.';
-      } else if (q.includes('498') || q.includes('women') || q.includes('sister') || q.includes('خواتین')) {
-        fallbackText =
-          lang === 'ur'
-            ? 'دفعہ 498-A مجموعہ تعزیراتِ پاکستان کے تحت خواتین (بیوی، بیٹی، بہن، ماں) کو وراثت سے محروم کرنے پر 5 سے 10 سال قید اور 10 لاکھ روپے تک جرمانہ ہے۔'
-            : 'Section 498-A of the Pakistan Penal Code penalizes coercing or depriving female heirs with 5 to 10 years imprisonment and up to PKR 1,000,000 fine.';
-      } else if (q.includes('nadra') || q.includes('succession') || q.includes('جانشینی')) {
-        fallbackText =
-          lang === 'ur'
-            ? 'نادرا جانشینی سرٹیفکیٹ ایکٹ 2021 کے تحت نادرا 15 سے 20 دن میں سرٹیفکیٹ جاری کرتا ہے۔ اس کے لیے ڈیتھ سرٹیفکیٹ، FRC اور تمام ورثاء کا بائیومیٹرک درکار ہوتا ہے۔'
-            : 'Under the Letters of Administration & Succession Certificates Act 2021, NADRA issues digital certificates within 15-20 days following biometric verification of all legal heirs.';
-      } else {
-        fallbackText =
-          lang === 'ur'
-            ? 'میں آپ کے سوال کا جائزہ لے رہا ہوں۔ آپ متوفی کے ورثاء، نادرا کے مراحل یا اراضی ریکارڈ سینٹر (انتقالِ اراضی) کے بارے میں مزید تفصیل بتا سکتے ہیں۔'
-            : 'Under Pakistani succession law and classical Hanafi Fara’iz, the estate opens strictly upon death. Could you specify which relative or legal procedure you would like to know about?';
-      }
-
+    } catch (err) {
+      // Fallback if offline
       const botMsg = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: fallbackText,
+        text:
+          lang === 'ur'
+            ? 'معذرت، انٹرنیٹ رابطہ سست ہے۔ براہ کرم دوبارہ کوشش فرمائیں۔'
+            : 'Connection timed out. Please check your connection and try again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, botMsg]);
@@ -191,13 +144,13 @@ Guidelines:
               </div>
               <div>
                 <h3 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                  <span>{lang === 'ur' ? 'وارث اے آئی قانونی رہنماء' : 'Waris AI Legal Counsel'}</span>
+                  <span>{lang === 'ur' ? 'وارث اے آئی قانونی مشیر' : 'Waris AI Legal Counsel'}</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                    LIVE AI
+                    LLM ENGINE
                   </span>
                 </h3>
                 <p className="text-[10px] text-slate-400">
-                  {lang === 'ur' ? 'آن لائن شرعی و قانونی معاون' : 'Islamic Inheritance & Succession Law'}
+                  {lang === 'ur' ? 'حقیقی لارج لینگویج ماڈل پر مبنی' : 'Real-time Generative LLM Assistant'}
                 </p>
               </div>
             </div>
@@ -223,19 +176,19 @@ Guidelines:
           {/* Quick Suggestion Chips */}
           <div className="p-2 bg-slate-950/60 border-b border-slate-800/80 overflow-x-auto flex items-center gap-1.5 no-scrollbar text-[10.5px]">
             <button
-              onClick={() => handleSendMessage('Can a father disown a child through newspaper Aaq-Nama?')}
+              onClick={() => handleSendMessage('Can a father disown a child through newspaper Aaq-Nama under Pakistani law?')}
               className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
             >
-              ⚖️ Aaq-Nama
+              ⚖️ Aaq-Nama Validity
             </button>
             <button
-              onClick={() => handleSendMessage('What is Section 498-A PPC for female inheritance?')}
+              onClick={() => handleSendMessage('What is Section 498-A PPC for female inheritance in Pakistan?')}
               className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
             >
-              👩 Section 498A
+              👩 Section 498A PPC
             </button>
             <button
-              onClick={() => handleSendMessage('How to get a NADRA Succession Certificate?')}
+              onClick={() => handleSendMessage('How do I apply for a NADRA Succession Certificate step by step?')}
               className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition"
             >
               📜 NADRA Steps
@@ -273,7 +226,7 @@ Guidelines:
             {isLoading && (
               <div className="flex items-center gap-2 text-slate-400 text-xs p-2">
                 <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span>{lang === 'ur' ? 'وارث اے آئی سوچ رہا ہے...' : 'Waris AI is generating response...'}</span>
+                <span>{lang === 'ur' ? 'ماڈل جواب تیار کر رہا ہے...' : 'Generating response via LLM...'}</span>
               </div>
             )}
 
@@ -290,7 +243,7 @@ Guidelines:
           >
             <input
               type="text"
-              placeholder={lang === 'ur' ? 'سوال درج کریں...' : 'Ask any legal or inheritance question...'}
+              placeholder={lang === 'ur' ? 'کوئی بھی سوال لکھیں...' : 'Ask any question...'}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
