@@ -15,6 +15,9 @@ import {
   Scale,
   ArrowRight,
   Compass,
+  TreeDeciduous,
+  Calculator,
+  Globe2,
 } from 'lucide-react';
 
 const initialFormData = {
@@ -43,6 +46,7 @@ const initialFormData = {
 export default function App() {
   const [lang, setLang] = useState('en');
   const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'results' | 'paperwork' | 'locator'
+  const [resultsSubTab, setResultsSubTab] = useState('summary'); // 'summary' | 'tree' | 'assets' | 'overseas'
   const [formData, setFormData] = useState(initialFormData);
   const [results, setResults] = useState(null);
 
@@ -57,6 +61,13 @@ export default function App() {
   const handleCalculate = () => {
     const res = calculateInheritance(formData);
     setResults(res);
+    setResultsSubTab('summary');
+    setActiveTab('results');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenResultsSubTab = (subTabKey) => {
+    setResultsSubTab(subTabKey);
     setActiveTab('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -150,6 +161,7 @@ export default function App() {
         grossEstate: 4000000,
       });
     }
+    setResultsSubTab('summary');
     setActiveTab('results');
   };
 
@@ -176,7 +188,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 no-print">
-        {/* Sleek, Non-Congested Hero Banner */}
+        {/* Sleek Hero Banner */}
         <div className="glass-panel-emerald p-5 sm:p-7 rounded-3xl border border-emerald-500/20 shadow-glow relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
             <div className="space-y-2 max-w-3xl">
@@ -235,9 +247,9 @@ export default function App() {
               />
             </div>
 
-            {/* Quick Live Results Snapshot on Desktop Sidebar */}
+            {/* Quick Live Results Snapshot & Feature Launcher on Desktop Sidebar */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="sticky top-24 space-y-6">
+              <div className="sticky top-24 space-y-4">
                 <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
@@ -251,7 +263,7 @@ export default function App() {
 
                   {results && results.heirsList && results.heirsList.length > 0 ? (
                     <div className="space-y-3">
-                      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                         {results.heirsList.map((h, i) => (
                           <div
                             key={i}
@@ -279,14 +291,38 @@ export default function App() {
                         ))}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('results')}
-                        className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition"
-                      >
-                        <span>{lang === 'ur' ? 'مکمل چارٹ و تفصیلات دیکھیں' : 'View Full Charts & Tables'}</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
+                      {/* Feature Launchers */}
+                      <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenResultsSubTab('summary')}
+                          className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-gold-300" />
+                          <span>{lang === 'ur' ? 'مکمل چارٹ و تفصیلات' : 'View Full Charts & Tables'}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenResultsSubTab('tree')}
+                            className="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700/80 flex items-center justify-center gap-1 transition"
+                          >
+                            <TreeDeciduous className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="truncate">{lang === 'ur' ? 'شجرہ نسب' : 'Family Tree'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenResultsSubTab('assets')}
+                            className="py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-700/80 flex items-center justify-center gap-1 transition"
+                          >
+                            <Calculator className="w-3.5 h-3.5 text-gold-400" />
+                            <span className="truncate">{lang === 'ur' ? 'مکان و اراضی' : 'Asset Divider'}</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-xs text-slate-400 text-center py-6">
@@ -304,7 +340,10 @@ export default function App() {
         {activeTab === 'results' && (
           <ResultsView
             results={results}
+            formData={formData}
             lang={lang}
+            resultsSubTab={resultsSubTab}
+            setResultsSubTab={setResultsSubTab}
             onNavigateToPaperwork={() => setActiveTab('paperwork')}
             onPrint={handlePrint}
           />

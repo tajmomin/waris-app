@@ -51,14 +51,20 @@ const COLORS = [
 
 export default function ResultsView({
   results,
+  formData,
   lang,
+  resultsSubTab: controlledSubTab,
+  setResultsSubTab: setControlledSubTab,
   onNavigateToPaperwork,
   onPrint,
 }) {
   const t = translations[lang];
   const [showAuditTrail, setShowAuditTrail] = useState(false);
-  const [resultsSubTab, setResultsSubTab] = useState('summary'); // 'summary' | 'tree' | 'assets' | 'overseas'
+  const [localSubTab, setLocalSubTab] = useState('summary'); // 'summary' | 'tree' | 'assets' | 'overseas'
   const [copied, setCopied] = useState(false);
+
+  const resultsSubTab = controlledSubTab !== undefined ? controlledSubTab : localSubTab;
+  const setResultsSubTab = setControlledSubTab || setLocalSubTab;
 
   if (!results || !results.heirsList || results.heirsList.length === 0) {
     return (
@@ -613,7 +619,7 @@ export default function ResultsView({
       {/* VIEW 2: Family Tree / Shajra-e-Nasab */}
       {resultsSubTab === 'tree' && (
         <FamilyTreeVisualizer
-          formData={{ deceasedGender: results.grossEstate ? 'male' : 'male' }}
+          formData={formData || { deceasedGender: 'male' }}
           results={results}
           lang={lang}
         />
