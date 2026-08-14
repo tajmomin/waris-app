@@ -13,15 +13,35 @@ import {
   BookOpen,
   ShieldCheck,
   CheckCircle2,
+  Settings,
+  Key,
+  ExternalLink,
 } from 'lucide-react';
 import { formatPKR } from '../utils/inheritanceCalculator';
 
 // Comprehensive Internal Legal Knowledge Base & Sharia Engine
 function getInstantLegalResponse(query, results, formData, lang) {
-  const q = query.toLowerCase();
+  const q = query.toLowerCase().trim();
   const isUr = lang === 'ur';
 
-  // 1. Current Active Case / Calculation details
+  // 1. Shia / Ja'fari Fiqh Inheritance (فقہ جعفریہ)
+  if (
+    q.includes('shia') ||
+    q.includes('jafari') ||
+    q.includes("ja'fari") ||
+    q.includes('shiah') ||
+    q.includes('شیعہ') ||
+    q.includes('جعفریہ') ||
+    q.includes('اہل تشیع')
+  ) {
+    if (isUr) {
+      return `🏛️ **فقہ جعفریہ (Shia Law of Inheritance) کے بنیادی اصول:**\n\n1. **ورثاء کے 3 طبقات (Classes):**\n   • **طبقہ اول:** والدین اور اولاد (اور اولاد نہ ہونے کی صورت میں پوتے پوتیاں)۔\n   • **طبقہ دوم:** دادا دادی، نانا نانی، اور تمام بھائی بہن۔\n   • **طبقہ سوم:** چچا، پھوپھی، ماموں، خالہ اور ان کی اولاد۔\n\n2. **قربت کا اصول (نزدیکی رشتہ دار کی ترجیح):** طبقہ اول کا ایک بھی وارث (مثلاً صرف ایک بیٹی) موجود ہو تو وہ طبقہ دوم اور سوم (بھائی، چچا وغیرہ) کو مکمل طور پر وراثت سے خارج کر دیتی ہے۔\n\n3. **عول اور عصبہ کا فرق:** فقہ جعفریہ میں روایتی سنی عصبہ (Residuary) اور عول (Awl) تسلیم نہیں کیا جاتا۔ اگر بیٹی اکیلی ہو تو بقیہ تمام ترکہ بھی 'رد' کے ذریعے اسی کو ملتا ہے۔\n\n4. **بیوہ کا حصہ:** اولاد ہونے پر 1/8 اور نہ ہونے پر 1/4۔ روایتی فقہ میں بے اولاد بیوہ منقولہ جائیداد اور عمارت کی قیمت سے حصہ پاتی ہے، اصل زرعی زمین سے نہیں۔`;
+    } else {
+      return `🏛️ **Shia (Ja'fari) Inheritance Jurisprudence Explained:**\n\n1. **Three Hierarchical Classes of Heirs:**\n   • **Class I:** Parents and direct Children (and grandchildren if children are predeceased).\n   • **Class II:** Grandparents (all) and Siblings (and their descendants).\n   • **Class III:** Paternal & Maternal Uncles and Aunts (and their descendants).\n\n2. **Rule of Proximate Exclusion:** Any surviving heir in Class I **completely excludes all heirs in Classes II and III**. For instance, a single daughter inherits the entire estate (her fixed share + remainder via Radd) and **completely blocks the deceased's brothers and paternal uncles** (unlike Sunni law where brothers inherit as Asaba).\n\n3. **Rejection of Sunni Awl & Asaba:** Shia jurisprudence does not recognize the classical Sunni residuary doctrine (Asabah) for distant agnatic relatives when immediate descendants exist.\n\n4. **Widow’s Share:** Receives 1/8 (with children) or 1/4 (without children). Under classical Ja'fari rules, a childless widow inherits from movable property and the valuation of buildings/trees, but not the physical corpus of agricultural land.`;
+    }
+  }
+
+  // 2. Current Active Case / Calculation details
   if (
     q.includes('my case') ||
     q.includes('my calculation') ||
@@ -35,12 +55,12 @@ function getInstantLegalResponse(query, results, formData, lang) {
   ) {
     if (results && results.heirsList && results.heirsList.length > 0) {
       if (isUr) {
-        return `📊 **آپ کے موجودہ وراثت کا خلاصہ:**\n\n• **کل خالص ترکہ:** ${formatPKR(results.netEstate)}\n• **حیثیت:** ${results.status === 'awl' ? 'عول (کمی کا تناسب)' : results.status === 'radd' ? 'رد (اضافی رقم کی واپسی)' : 'عام تقسیم (عادل)'}\n\n**ورثاء کے حصے:**\n${results.heirsList
+        return `📊 **آپ کے موجودہ کیس کا مکمل خلاصہ:**\n\n• **کل خالص ترکہ:** ${formatPKR(results.netEstate)}\n• **حیثیت:** ${results.status === 'awl' ? 'عول (کمی کا تناسب)' : results.status === 'radd' ? 'رد (اضافی رقم کی واپسی)' : 'عام تقسیم (عادل)'}\n\n**ورثاء کے حصے:**\n${results.heirsList
           .map(
             (h) =>
               `• **${h.nameUr || h.nameEn}:** ${h.fractionFormatted} (${h.percentage.toFixed(2)}%) — ${formatPKR(h.shareAmount)}`
           )
-          .join('\n')}\n\nیہ حساب کتاب فقہ حنفی اور پاکستانی قوانین کے عین مطابق تیار کیا گیا ہے۔`;
+          .join('\n')}\n\nتمام حصے قرآنی آیات اور پاکستانی جانشینی قوانین کے مطابق حساب کیے گئے ہیں۔`;
       } else {
         return `📊 **Active Estate Calculation Summary:**\n\n• **Net Distributable Estate:** ${formatPKR(results.netEstate)}\n• **Distribution Status:** ${results.status.toUpperCase()} (${results.statusDescriptionEn || 'Standard Division'})\n\n**Heirs & Shares Breakdown:**\n${results.heirsList
           .map(
@@ -56,7 +76,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 2. Aaq-Nama / Disowning child (عاق نامہ)
+  // 3. Aaq-Nama / Disowning child (عاق نامہ)
   if (
     q.includes('aaq') ||
     q.includes('disown') ||
@@ -72,7 +92,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 3. Section 498-A PPC / Female Inheritance Deprivation (خواتین کے حقوق)
+  // 4. Section 498-A PPC / Female Inheritance Deprivation (خواتین کے حقوق)
   if (
     q.includes('498') ||
     q.includes('female') ||
@@ -91,7 +111,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 4. NADRA Succession Certificate (نادرا جانشینی سرٹیفکیٹ)
+  // 5. NADRA Succession Certificate (نادرا جانشینی سرٹیفکیٹ)
   if (
     q.includes('nadra') ||
     q.includes('succession certificate') ||
@@ -107,7 +127,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 5. Predeceased Child / Orphaned Grandchild (یتیم پوتا پوتی)
+  // 6. Predeceased Child / Orphaned Grandchild (یتیم پوتا پوتی)
   if (
     q.includes('grandchild') ||
     q.includes('orphaned') ||
@@ -125,7 +145,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 6. Wasiyyah / Will Limits (وصیت کی شرعی حد)
+  // 7. Wasiyyah / Will Limits (وصیت کی شرعی حد)
   if (
     q.includes('wasiyyah') ||
     q.includes('will') ||
@@ -141,7 +161,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 7. Debts & Funeral Priority (قرض اور تجہیز و تکفین)
+  // 8. Debts & Funeral Priority (قرض اور تجہیز و تکفین)
   if (
     q.includes('debt') ||
     q.includes('funeral') ||
@@ -159,7 +179,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 8. Land Mutation / Patwari / PLRA (زمین کا انتقال / اراضی ریکارڈ سینٹر)
+  // 9. Land Mutation / Patwari / PLRA (زمین کا انتقال / اراضی ریکارڈ سینٹر)
   if (
     q.includes('land') ||
     q.includes('mutation') ||
@@ -178,7 +198,7 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 9. Awl & Radd (عول اور رد)
+  // 10. Awl & Radd (عول اور رد)
   if (
     q.includes('awl') ||
     q.includes('radd') ||
@@ -194,29 +214,20 @@ function getInstantLegalResponse(query, results, formData, lang) {
     }
   }
 
-  // 10. Greetings & General Conversational questions
-  if (
-    q.includes('hi') ||
-    q.includes('hello') ||
-    q.includes('salam') ||
-    q.includes('hey') ||
-    q.includes('سلام') ||
-    q.includes('کیسے') ||
-    q.includes('کون ہو') ||
-    q.includes('who are you')
-  ) {
+  // 11. Precise Word-Boundary Greeting Match (Only triggers on actual standalone greetings)
+  if (/\b(hi|hello|hey|salam|slam|aoa|as-salamu|assalam)\b/i.test(q)) {
     if (isUr) {
-      return `وعلیکم السلام! میں **وارث اے آئی** ہوں — اسلامی وراثت (فرائض) اور پاکستانی جانشینی قوانین کا مستند قانونی معاون۔\n\nآپ مجھ سے درج ذیل موضوعات پر بلا جھجھک رہنمائی حاصل کر سکتے ہیں:\n• وراثت کی شرعی تقسیم اور ریاضیاتی تناسب\n• نادرا جانشینی سرٹیفکیٹ کا طریقہ کار\n• خواتین کے حقوق (دفعہ 498-اے)\n• عاق نامہ اور اراضی کے انتقال کے ضوابط\n\nآپ کیا جاننا چاہتے ہیں؟`;
+      return `وعلیکم السلام! میں **وارث اے آئی** ہوں — اسلامی وراثت (فرائض) اور پاکستانی جانشینی قوانین کا مستند قانونی معاون۔\n\nآپ مجھ سے درج ذیل موضوعات پر بلا جھجھک رہنمائی حاصل کر سکتے ہیں:\n• فقہ حنفی و فقہ جعفریہ (Shia Law) میں وراثت کی تقسیم\n• نادرا جانشینی سرٹیفکیٹ کا طریقہ کار\n• خواتین کے حقوق (دفعہ 498-اے)\n• عاق نامہ اور اراضی کے انتقال کے ضوابط\n\nآپ کیا جاننا چاہتے ہیں؟`;
     } else {
-      return `Wa Alaykum As-salam! I am **Waris AI** — your specialized Shariah & Pakistani Succession Law counsel.\n\nI can assist you with:\n• Precise Quranic fractional share calculations (Zawil Furood & Asaba)\n• Step-by-step NADRA Digital Succession roadmap\n• Section 498-A PPC protections for women\n• Real Estate Mutation (Intiqal) & Court Affidavit procedures\n\nHow can I help you with your succession case today?`;
+      return `Wa Alaykum As-salam! I am **Waris AI** — your specialized Shariah & Pakistani Succession Law counsel.\n\nI can assist you with:\n• Sunni (Hanafi) & Shia (Ja'fari) fractional share calculations\n• Step-by-step NADRA Digital Succession roadmap\n• Section 498-A PPC protections for women\n• Real Estate Mutation (Intiqal) & Court Affidavit procedures\n\nHow can I help you with your succession case today?`;
     }
   }
 
-  // 11. Comprehensive Default Guidance
+  // 12. General Guidance
   if (isUr) {
-    return `⚖️ **وارث قانونی مشیر کی رہنمائی:**\n\nآپ کا سوال موصول ہوا۔ اسلامی وراثت (فقہ حنفی) اور پاکستانی قوانین (Succession Act 1925 و نادرا جانشینی ایکٹ 2021) کے تحت:\n\n1. تمام شرعی ورثاء کے حقوق قرآن مجید کی سورۃ النساء (آیات 11، 12، 176) کے تحت محفوظ ہیں۔\n2. ترکے کی تقسیم سے قبل تجہیز و تکفین، تمام واجب الادا قرضے (بشمول حق مہر)، اور جائز وصیت (زیادہ سے زیادہ 1/3) وضع کرنا لازمی ہے۔\n3. متنازعہ معاملات کی صورت میں متعلقہ سول جج اور غیر متنازعہ معاملات میں نادرا سہولت کاؤنٹر سے باضابطہ رجوع کیا جا سکتا ہے۔\n\nمزید تفصیلی رہنمائی کے لیے اوپر دیے گئے فوری بٹنز پر کلک کریں یا مخصوص سوال تحریر فرمائیں۔`;
+    return `⚖️ **وارث قانونی و شرعی رہنمائی:**\n\nآپ کے سوال کے تناظر میں:\n\n1. **شرعی اصول:** تمام شرعی ورثاء کے حقوق قرآن مجید کی سورۃ النساء (آیات 11، 12، 176) اور متعلقہ فقہی اصولوں کے تحت محفوظ ہیں۔\n2. **لازمی اخراجات:** ترکے کی تقسیم سے قبل تجہیز و تکفین، تمام واجب الادا قرضے (بشمول حق مہر)، اور جائز وصیت (زیادہ سے زیادہ 1/3) وضع کرنا لازمی ہے۔\n3. **قانونی کارروائی:** غیر متنازعہ جانشینی کے لیے نادرا جانشینی ایکٹ 2021 اور متنازعہ معاملات میں سول کورٹ (Succession Act 1925) سے رجوع کیا جاتا ہے۔\n\nمزید مخصوص رہنمائی کے لیے اوپر دیے گئے فوری بٹنز استعمال کریں یا سوال تفصیل سے لکھیں۔`;
   } else {
-    return `⚖️ **Legal & Shariah Analysis:**\n\nUnder Islamic Jurisprudence (Fara'iz) and Pakistani statutory laws (Letters of Administration and Succession Certificates Act 2021 & Succession Act 1925):\n\n1. **Quranic Entitlements:** Every designated heir's share is fixed by divine decree (Surah An-Nisa 4:11, 4:12, 4:176) and cannot be altered by custom or family pressure.\n2. **Mandatory Deductions:** Before distribution, all funeral costs, outstanding debts (including unpaid dower/Mahr), and valid bequests (up to 1/3rd) must be settled.\n3. **Official Title Transfer:** Title transfer is completed via a digital NADRA Succession Certificate (uncontested) or a Civil Court succession decree (contested).\n\nPlease ask any specific question or click the quick topic buttons above for instant statutory guidance.`;
+    return `⚖️ **Legal & Shariah Analysis:**\n\nUnder Islamic Jurisprudence (Fara'iz) and Pakistani statutory laws (Letters of Administration and Succession Certificates Act 2021 & Succession Act 1925):\n\n1. **Quranic Entitlements:** Every designated heir's share is established by divine decree (Surah An-Nisa 4:11, 4:12, 4:176) and codified under Pakistani law.\n2. **Mandatory Deductions:** Before distribution, all funeral costs, outstanding debts (including unpaid dower/Mahr), and valid bequests (up to 1/3rd) must be settled.\n3. **Official Title Transfer:** Succession is finalized via a digital NADRA Succession Certificate (uncontested) or a Civil Court succession decree (contested).\n\nPlease ask any specific question or click the quick topic buttons above for instant statutory guidance.`;
   }
 }
 
@@ -268,6 +279,8 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('waris_gemini_api_key') || '');
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([
     {
@@ -275,8 +288,8 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
       sender: 'bot',
       text:
         lang === 'ur'
-          ? 'السلام علیکم! میں وارث اے آئی قانونی اور شرعی مشیر ہوں۔ آپ اسلامی وراثت، نادرا جانشینی سرٹیفکیٹ یا اراضی کے انتقال سے متعلق کوئی بھی سوال پوچھ سکتے ہیں۔'
-          : 'As-salamu alaykum! I am Waris AI — an AI Legal & Shariah Counsel. Ask me any question about Fara’iz shares, NADRA succession, women’s inheritance rights, or land mutation.',
+          ? 'السلام علیکم! میں وارث اے آئی قانونی اور شرعی مشیر ہوں۔ آپ اسلامی وراثت (سنی/شیعہ)، نادرا جانشینی سرٹیفکیٹ یا اراضی کے انتقال سے متعلق کوئی بھی سوال پوچھ سکتے ہیں۔'
+          : 'As-salamu alaykum! I am Waris AI — an AI Legal & Shariah Counsel. Ask me any question about Sunni & Shia inheritance, NADRA succession, women’s rights, or land mutation.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -296,6 +309,12 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
     }, 220);
   };
 
+  const handleSaveApiKey = (newKey) => {
+    setApiKey(newKey);
+    localStorage.setItem('waris_gemini_api_key', newKey);
+    setShowSettings(false);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -306,7 +325,7 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
     }
   }, [messages, isOpen]);
 
-  // Robust Hybrid AI Processing Engine
+  // Generative AI Processing Call
   const handleSendMessage = async (textToSend) => {
     const query = (textToSend || inputMessage).trim();
     if (!query || isLoading) return;
@@ -323,57 +342,66 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
     setIsLoading(true);
 
     try {
-      // First generate domain-accurate response
-      const fallbackResponse = getInstantLegalResponse(query, results, formData, lang);
+      let aiResponse = null;
 
-      // Attempt live LLM fetch with strict 3-second timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const activeEstateContext =
+        results && results.heirsList && results.heirsList.length > 0
+          ? `Active User Estate: Net PKR ${results.netEstate}, Heirs: ${results.heirsList
+              .map((h) => `${h.nameEn} (${h.fractionFormatted})`)
+              .join(', ')}.`
+          : 'No calculation entered yet.';
 
-      let finalResponse = fallbackResponse;
+      const systemPrompt = `You are Waris AI, a world-class certified Pakistani succession lawyer and Islamic jurisprudence scholar (expert in both Sunni Hanafi Fara'iz and Shia Ja'fari inheritance, NADRA Succession Act 2021, Section 498-A PPC, and PLRA Land Revenue laws).
+Current Context: ${activeEstateContext}
+Language: ${lang === 'ur' ? 'Urdu' : 'English'}.
+Instructions: Respond accurately, empathetically, and concisely in 1-3 well-formatted paragraphs with bullet points. Use bold text for key terms.`;
 
-      try {
-        const activeEstateContext =
-          results && results.heirsList && results.heirsList.length > 0
-            ? `Active User Estate: Net PKR ${results.netEstate}, Heirs: ${results.heirsList
-                .map((h) => `${h.nameEn} (${h.fractionFormatted})`)
-                .join(', ')}.`
-            : 'No calculation entered yet.';
-
-        const prompt = `You are Waris AI, a certified Pakistani succession lawyer and Hanafi Islamic jurisprudence expert. Answer concisely in ${
-          lang === 'ur' ? 'Urdu' : 'English'
-        }. Context: ${activeEstateContext}. Question: ${query}`;
-
-        const res = await fetch(
-          `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`,
-          {
-            signal: controller.signal,
+      // 1. If User has configured a Google Gemini API Key
+      if (apiKey && apiKey.trim().length > 10) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(
+              apiKey.trim()
+            )}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { text: `${systemPrompt}\n\nUser Question: ${query}` }
+                    ]
+                  }
+                ]
+              })
+            }
+          );
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+              aiResponse = data.candidates[0].content.parts[0].text;
+            }
           }
-        );
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          const text = await res.text();
-          if (text && text.trim().length > 15 && !text.includes('"status":402') && !text.includes('Payment Required')) {
-            finalResponse = text.trim();
-          }
+        } catch (geminiErr) {
+          console.warn('Gemini direct API call error:', geminiErr);
         }
-      } catch (e) {
-        // Safe fallback on timeout or error
-        clearTimeout(timeoutId);
       }
 
-      // Add bot message
+      // 2. If no response yet, use the Domain Legal Knowledge Engine
+      if (!aiResponse) {
+        aiResponse = getInstantLegalResponse(query, results, formData, lang);
+      }
+
       const botMsg = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: finalResponse,
+        text: aiResponse.trim(),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      // Guaranteed safety
       const botMsg = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
@@ -414,7 +442,7 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
           } ${
             isExpanded
               ? 'fixed inset-3 sm:inset-8 z-50 rounded-2xl shadow-emerald-950/40'
-              : 'w-[92vw] sm:w-[430px] h-[550px] max-h-[85vh]'
+              : 'w-[92vw] sm:w-[440px] h-[560px] max-h-[85vh]'
           }`}
         >
           {/* Clean Header */}
@@ -428,16 +456,26 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
                   <span>{lang === 'ur' ? 'وارث اے آئی قانونی مشیر' : 'Waris AI Legal Counsel'}</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    ACTIVE
+                    {apiKey ? 'GEMINI LLM' : 'SHARIA AI'}
                   </span>
                 </h3>
                 <p className="text-[10px] text-slate-400">
-                  {lang === 'ur' ? 'شریعت و پاکستانی جانشینی قوانین' : 'Shariah & Pakistani Succession Counsel'}
+                  {lang === 'ur' ? 'سنی و شیعہ وراثت اور پاکستانی قوانین' : 'Sunni & Shia Fara\'iz & Succession Law'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 text-slate-400">
+              <button
+                type="button"
+                onClick={() => setShowSettings(!showSettings)}
+                className={`p-1.5 rounded-lg transition-colors duration-200 ${
+                  showSettings ? 'bg-emerald-950 text-emerald-300' : 'hover:bg-slate-800 hover:text-white'
+                }`}
+                title="AI Settings & Gemini API Key"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -457,8 +495,56 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
             </div>
           </div>
 
+          {/* AI Settings / Gemini API Key Drawer */}
+          {showSettings && (
+            <div className="p-3 bg-slate-950/95 border-b border-slate-800 animate-fade-in-up text-xs space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-[11px]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Google Gemini 1.5/2.0 Flash Integration</span>
+                </div>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] text-emerald-400 hover:underline flex items-center gap-0.5"
+                >
+                  Get free key <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
+              <p className="text-[10.5px] text-slate-300">
+                Paste any free Google Gemini API key to enable unlimited, real-time generative reasoning:
+              </p>
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <Key className="w-3 h-3 text-slate-500 absolute left-2.5 top-2.5" />
+                  <input
+                    type="password"
+                    placeholder="AIzaSy..."
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="w-full pl-8 pr-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleSaveApiKey(apiKey)}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Quick Suggestion Chips */}
           <div className="p-2 bg-slate-950/70 border-b border-slate-800/80 overflow-x-auto flex items-center gap-1.5 no-scrollbar text-[10.5px]">
+            <button
+              onClick={() => handleSendMessage('What are the rules of inheritance under Shia (Ja\'fari) law compared to Sunni law?')}
+              className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              🏛️ Shia (Ja'fari) Rules
+            </button>
             <button
               onClick={() => handleSendMessage('Can a father disown a child through newspaper Aaq-Nama under Pakistani law?')}
               className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-emerald-950 text-slate-300 hover:text-emerald-300 border border-slate-700/60 shrink-0 transition-all duration-200 hover:scale-105 active:scale-95"
@@ -533,7 +619,7 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
           >
             <input
               type="text"
-              placeholder={lang === 'ur' ? 'کوئی بھی سوال لکھیں (مثلاً: عاق نامہ، نادرا، بیوہ کا حصہ)...' : 'Ask any question (e.g., Aaq-Nama, NADRA, wife share)...'}
+              placeholder={lang === 'ur' ? 'کوئی بھی سوال لکھیں (مثلاً: شیعہ وراثت، عاق نامہ، نادرا)...' : 'Ask any question (e.g., Shia inheritance, Aaq-Nama, NADRA)...'}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors duration-200"
