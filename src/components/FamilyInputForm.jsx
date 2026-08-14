@@ -14,6 +14,10 @@ import {
   Calculator,
   RotateCcw,
   Info,
+  ArrowRight,
+  ArrowLeft,
+  Layers,
+  Heart,
 } from 'lucide-react';
 import { translations } from '../translations/translations';
 import { formatPKR, formatPKRWords } from '../utils/inheritanceCalculator';
@@ -27,6 +31,8 @@ export default function FamilyInputForm({
   onSelectPreset,
 }) {
   const t = translations[lang];
+  const [formStep, setFormStep] = useState(1); // 1: Estate & Deceased, 2: Immediate Family, 3: Extended Family
+  const [wizardMode, setWizardMode] = useState(true); // true = Step-by-Step, false = All-in-one
   const [showDeductions, setShowDeductions] = useState(false);
 
   // Helper to update form values
@@ -67,54 +73,67 @@ export default function FamilyInputForm({
 
   return (
     <div className="space-y-6">
-      {/* Quick Test Presets Bar for Easy Demo & Verification */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-800">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-gold-400">
-            <Sparkles className="w-4 h-4" />
-            <span>{lang === 'ur' ? 'فوری جانچ کے لیے خاندانی مثالیں:' : 'Quick Preloaded Test Scenarios:'}</span>
-          </div>
-          <span className="text-[11px] text-slate-400">
-            {lang === 'ur' ? 'ایک کلک میں فارم بھریں' : 'Click to populate form instantly'}
+      {/* Mode Switcher & Top Steps Bar */}
+      <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Step Indicator Pills */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setFormStep(1)}
+            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              formStep === 1
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+            }`}
+          >
+            <Coins className="w-3.5 h-3.5" />
+            <span>{lang === 'ur' ? '1. ترکہ و متوفی' : '1. Estate & Deceased'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFormStep(2)}
+            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              formStep === 2
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+            }`}
+          >
+            <Heart className="w-3.5 h-3.5" />
+            <span>{lang === 'ur' ? '2. بیوی / شوہر و اولاد' : '2. Spouse & Children'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFormStep(3)}
+            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              formStep === 3
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>{lang === 'ur' ? '3. والدین و بہن بھائی' : '3. Parents & Siblings'}</span>
+          </button>
+        </div>
+
+        {/* View Mode Toggle */}
+        <button
+          type="button"
+          onClick={() => setWizardMode(!wizardMode)}
+          className="text-[11px] font-semibold text-slate-400 hover:text-emerald-400 transition flex items-center gap-1 shrink-0"
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>
+            {wizardMode
+              ? lang === 'ur'
+                ? 'تمام خانے ایک ساتھ دیکھیں'
+                : 'Switch to All-in-One View'
+              : lang === 'ur'
+              ? 'مرحلہ وار آسان طریقہ اپنائیں'
+              : 'Switch to Step-by-Step Wizard'}
           </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          <button
-            type="button"
-            onClick={() => onSelectPreset('standard')}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-800/80 hover:bg-emerald-900/60 text-slate-200 hover:text-emerald-300 border border-slate-700/80 transition text-center truncate"
-          >
-            {t.presetStandard}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectPreset('parents_spouse')}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-800/80 hover:bg-emerald-900/60 text-slate-200 hover:text-emerald-300 border border-slate-700/80 transition text-center truncate"
-          >
-            {t.presetParentsSpouse}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectPreset('daughters_brother')}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-800/80 hover:bg-emerald-900/60 text-slate-200 hover:text-emerald-300 border border-slate-700/80 transition text-center truncate"
-          >
-            {t.presetDaughtersBrother}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectPreset('awl')}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-800/80 hover:bg-gold-950/60 text-slate-200 hover:text-gold-300 border border-slate-700/80 transition text-center truncate"
-          >
-            {t.presetAwlCase}
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectPreset('radd')}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-slate-800/80 hover:bg-cyan-950/60 text-slate-200 hover:text-cyan-300 border border-slate-700/80 transition text-center truncate"
-          >
-            {t.presetSingleDaughter}
-          </button>
-        </div>
+        </button>
       </div>
 
       <form
@@ -124,45 +143,57 @@ export default function FamilyInputForm({
         }}
         className="space-y-6"
       >
-        {/* Section 1: Deceased & Estate Information */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <User className="w-5 h-5" />
+        {/* ================= STEP 1: DECEASED & ESTATE ================= */}
+        {(formStep === 1 || !wizardMode) && (
+          <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5 animate-fadeIn">
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-100">{t.sectionDeceased}</h2>
+                <p className="text-xs text-slate-400">
+                  {lang === 'ur'
+                    ? 'متوفی کی جنس اور کل ترکہ (جائیداد/بینک بیلنس) درج کریں'
+                    : 'Specify gender of deceased and total estate valuation'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionDeceased}</h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ur'
-                  ? 'متوفی کی جنس اور کل ترکہ (جائیداد/بینک بیلنس) درج کریں'
-                  : 'Specify gender of deceased and total estate valuation'}
-              </p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Gender of Deceased */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-2">
-                {t.deceasedGenderLabel}
+            {/* Gender Selector */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-300">
+                {t.deceasedGenderLabel} <span className="text-emerald-400">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     updateField('deceasedGender', 'male');
                     updateField('husband', false);
                   }}
-                  className={`p-3 rounded-xl border text-xs font-semibold transition flex flex-col items-center gap-1.5 ${
+                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all ${
                     formData.deceasedGender === 'male'
-                      ? 'bg-emerald-600/30 border-emerald-500 text-emerald-300 shadow-glow'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-glow'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
-                  <span className="font-bold">{lang === 'ur' ? 'مرد (مرحوم)' : 'Male (Deceased)'}</span>
-                  <span className="text-[10px] text-slate-400 text-center">
-                    {lang === 'ur' ? 'والد / شوہر / بھائی' : 'Father / Husband'}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm">
+                      👨
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100">
+                        {lang === 'ur' ? 'مرد (مرحوم)' : 'Male (Deceased Father/Husband)'}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {lang === 'ur' ? 'بیوہ، اولاد اور والدین ورثاء ہو سکتے ہیں' : 'Wife, Children, Parents inherit'}
+                      </div>
+                    </div>
+                  </div>
+                  {formData.deceasedGender === 'male' && (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  )}
                 </button>
 
                 <button
@@ -171,758 +202,526 @@ export default function FamilyInputForm({
                     updateField('deceasedGender', 'female');
                     updateField('wivesCount', 0);
                   }}
-                  className={`p-3 rounded-xl border text-xs font-semibold transition flex flex-col items-center gap-1.5 ${
+                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all ${
                     formData.deceasedGender === 'female'
-                      ? 'bg-emerald-600/30 border-emerald-500 text-emerald-300 shadow-glow'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                      ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-glow'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
-                  <span className="font-bold">{lang === 'ur' ? 'عورت (مرحومہ)' : 'Female (Deceased)'}</span>
-                  <span className="text-[10px] text-slate-400 text-center">
-                    {lang === 'ur' ? 'والدہ / بیوی / بہن' : 'Mother / Wife'}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm">
+                      👩
+                    </div>
+                    <div>
+                      <div className="font-bold text-xs text-slate-100">
+                        {lang === 'ur' ? 'عورت (مرحومہ)' : 'Female (Deceased Mother/Wife)'}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {lang === 'ur' ? 'شوہر، اولاد اور والدین ورثاء ہو سکتے ہیں' : 'Husband, Children, Parents inherit'}
+                      </div>
+                    </div>
+                  </div>
+                  {formData.deceasedGender === 'female' && (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Gross Estate Value (PKR) */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Coins className="w-3.5 h-3.5 text-gold-400" />
-                  {t.grossEstateLabel}
-                </label>
-                {gross > 0 && (
-                  <span className="text-[11px] font-bold text-gold-400">
-                    {formatPKRWords(gross, lang)}
-                  </span>
-                )}
-              </div>
+            {/* Gross Estate Amount */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-300">
+                {t.grossEstateLabel} <span className="text-emerald-400">*</span>
+              </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">
-                  PKR
-                </span>
                 <input
                   type="number"
                   min="0"
                   step="1000"
-                  value={formData.grossEstate || ''}
+                  value={formData.grossEstate}
                   onChange={(e) => updateField('grossEstate', e.target.value)}
                   placeholder={t.grossEstatePlaceholder}
-                  className="w-full pl-12 pr-4 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm font-semibold text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 font-bold focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-sm"
                 />
+                <Coins className="w-4 h-4 text-emerald-400 absolute left-3.5 top-3.5" />
               </div>
 
-              {/* Quick PKR Chips */}
-              <div className="flex flex-wrap gap-1.5 mt-2">
+              {/* Quick Pakistani Amounts */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] text-slate-400 mr-1">
+                  {lang === 'ur' ? 'فوری رقم:' : 'Quick Amounts:'}
+                </span>
                 <button
                   type="button"
                   onClick={() => setQuickEstate(5000000)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700"
+                  className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
                 >
                   {t.quickPkr50L}
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickEstate(10000000)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700"
+                  className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition font-semibold"
                 >
                   {t.quickPkr1C}
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickEstate(30000000)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700"
+                  className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
                 >
                   {t.quickPkr3C}
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickEstate(50000000)}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-medium text-slate-300 border border-slate-700"
+                  className="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
                 >
                   {t.quickPkr5C}
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Deductions & Liabilities Accordion (Islamic Estate Rights: Tajheez, Duyoon, Wasiyyah) */}
-          <div className="mt-5 pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={() => setShowDeductions(!showDeductions)}
-              className="w-full flex items-center justify-between text-xs font-semibold text-slate-300 hover:text-emerald-300 transition"
-            >
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-emerald-400" />
-                <span>{t.deductionsHeader}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                  {lang === 'ur' ? 'کفن دفن، قرض اور وصیت' : 'Burial, Debts & Will'}
-                </span>
-              </div>
-              {showDeductions ? (
-                <ChevronUp className="w-4 h-4 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
+              {gross > 0 && (
+                <div className="text-xs font-semibold text-gold-400 pt-1">
+                  {formatPKR(gross)} ({formatPKRWords(gross, lang)})
+                </div>
               )}
-            </button>
+            </div>
 
-            {showDeductions && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                    {t.funeralLabel}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.funeralExpenses || ''}
-                    onChange={(e) => updateField('funeralExpenses', e.target.value)}
-                    placeholder="0"
-                    className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+            {/* Optional Liabilities Accordion */}
+            <div className="border-t border-slate-800/80 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowDeductions(!showDeductions)}
+                className="w-full flex items-center justify-between text-xs font-semibold text-slate-300 hover:text-emerald-400 transition py-1"
+              >
+                <span className="flex items-center gap-2">
+                  <Calculator className="w-4 h-4 text-emerald-400" />
+                  <span>{t.deductionsHeader} (تجہیز و تکفین، قرضے، وصیت)</span>
+                </span>
+                {showDeductions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
 
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                    {t.debtsLabel}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.debts || ''}
-                    onChange={(e) => updateField('debts', e.target.value)}
-                    placeholder="0"
-                    className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-medium text-slate-400">
-                      {t.wasiyyahLabel}
-                    </label>
+              {showDeductions && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1">{t.funeralLabel}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.funeralExpenses}
+                      onChange={(e) => updateField('funeralExpenses', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
+                    />
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    max={maxWasiyyah}
-                    value={formData.wasiyyah || ''}
-                    onChange={(e) => updateField('wasiyyah', e.target.value)}
-                    placeholder="0"
-                    className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    {lang === 'ur'
-                      ? `زیادہ سے زیادہ حد: ${formatPKR(maxWasiyyah)}`
-                      : `Max 1/3: ${formatPKR(maxWasiyyah)}`}
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1">{t.debtsLabel}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.debts}
+                      onChange={(e) => updateField('debts', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1">{t.wasiyyahLabel}</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.wasiyyah}
+                      onChange={(e) => updateField('wasiyyah', e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 1 Next Button in Wizard Mode */}
+            {wizardMode && (
+              <div className="flex justify-end pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setFormStep(2)}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition"
+                >
+                  <span>{lang === 'ur' ? 'اگلا مرحلہ: شریکِ حیات و اولاد' : 'Next: Spouse & Children'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= STEP 2: SPOUSE & CHILDREN ================= */}
+        {(formStep === 2 || !wizardMode) && (
+          <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-6 animate-fadeIn">
+            {/* Section: Surviving Spouse */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+                <div className="w-9 h-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+                  <HeartHandshake className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-100">{t.sectionSpouse}</h2>
+                  <p className="text-xs text-slate-400">
+                    {formData.deceasedGender === 'male'
+                      ? lang === 'ur' ? 'حیات بیواؤں کی تعداد منتخب کریں' : 'Select number of surviving wives (0 - 4)'
+                      : lang === 'ur' ? 'کیا شوہر حیات ہیں؟' : 'Select if surviving husband is alive'}
                   </p>
                 </div>
               </div>
+
+              {formData.deceasedGender === 'male' ? (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">{t.wifeCountLabel}</span>
+                    <span className="block text-[11px] text-slate-400">
+                      {formData.sonsCount > 0 || formData.daughtersCount > 0
+                        ? lang === 'ur' ? 'اولاد کی موجودگی میں بیوہ کا حصہ 1/8 ہے' : '1/8 share in presence of children'
+                        : lang === 'ur' ? 'اولاد نہ ہونے پر بیوہ کا حصہ 1/4 ہے' : '1/4 share with no children'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decrement('wivesCount')}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-6 text-center font-bold text-emerald-400 text-sm">
+                      {formData.wivesCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment('wivesCount', 4)}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">{t.husbandLabel}</span>
+                    <span className="block text-[11px] text-slate-400">
+                      {formData.sonsCount > 0 || formData.daughtersCount > 0
+                        ? lang === 'ur' ? 'اولاد کی موجودگی میں شوہر کا حصہ 1/4 ہے' : '1/4 share in presence of children'
+                        : lang === 'ur' ? 'اولاد نہ ہونے پر شوہر کا حصہ 1/2 ہے' : '1/2 share with no children'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateField('husband', !formData.husband)}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${
+                        formData.husband
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-md'
+                          : 'bg-slate-900 text-slate-400 border-slate-700'
+                      }`}
+                    >
+                      {formData.husband ? (lang === 'ur' ? 'حیات ہیں ✓' : 'Alive ✓') : (lang === 'ur' ? 'نہیں' : 'No')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Section: Surviving Children */}
+            <div className="space-y-4 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-100">{t.sectionChildren}</h2>
+                  <p className="text-xs text-slate-400">
+                    {lang === 'ur'
+                      ? 'حیات صلبی بیٹوں اور بیٹیوں کی تعداد درج کریں (2:1 تناسب)'
+                      : 'Enter surviving sons and daughters (inheriting at 2:1 ratio)'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Sons Counter */}
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">{t.sonsCountLabel}</span>
+                    <span className="block text-[10px] text-emerald-400 font-semibold">
+                      {lang === 'ur' ? 'عصبہ بالنفس / 2 حصے' : 'Primary Residuary (2x share)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decrement('sonsCount')}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-6 text-center font-bold text-emerald-400 text-sm">
+                      {formData.sonsCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment('sonsCount', 20)}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Daughters Counter */}
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">{t.daughtersCountLabel}</span>
+                    <span className="block text-[10px] text-teal-400 font-semibold">
+                      {formData.sonsCount > 0
+                        ? lang === 'ur' ? 'بھائی کے ساتھ عصبہ بالغیر (1 حصہ)' : 'Residuary with brother (1x share)'
+                        : lang === 'ur' ? 'اکیلی: 1/2 • دو یا زائد: 2/3' : '1 daughter: 1/2 • 2+: 2/3'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decrement('daughtersCount')}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-6 text-center font-bold text-emerald-400 text-sm">
+                      {formData.daughtersCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment('daughtersCount', 20)}
+                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 Wizard Navigation */}
+            {wizardMode && (
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setFormStep(1)}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs border border-slate-700 flex items-center gap-1.5 transition"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{lang === 'ur' ? 'پیچھے' : 'Back'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormStep(3)}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition"
+                >
+                  <span>{lang === 'ur' ? 'اگلا مرحلہ: والدین و بہن بھائی' : 'Next: Parents & Extended'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================= STEP 3: EXTENDED RELATIVES (PARENTS, GRANDPARENTS, SIBLINGS) ================= */}
+        {(formStep === 3 || !wizardMode) && (
+          <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-6 animate-fadeIn">
+            {/* Parents Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
+                <div className="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-100">{t.sectionParents}</h2>
+                  <p className="text-xs text-slate-400">
+                    {lang === 'ur'
+                      ? 'کیا متوفی کے والد یا والدہ حیات ہیں؟'
+                      : 'Select if deceased’s mother or father are surviving'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => updateField('fatherAlive', !formData.fatherAlive)}
+                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                    formData.fatherAlive
+                      ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-glow'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-100">{t.fatherAliveLabel}</div>
+                    <div className="text-[10px] text-slate-400">
+                      {formData.sonsCount > 0
+                        ? lang === 'ur' ? '1/6 مقررہ حصہ' : '1/6 Fixed Share'
+                        : lang === 'ur' ? '1/6 فرض + باقی ترکہ (عصبہ)' : '1/6 + Residue'}
+                    </div>
+                  </div>
+                  {formData.fatherAlive && <Check className="w-4 h-4 text-emerald-400" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateField('motherAlive', !formData.motherAlive)}
+                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all ${
+                    formData.motherAlive
+                      ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-glow'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div>
+                    <div className="font-bold text-xs text-slate-100">{t.motherAliveLabel}</div>
+                    <div className="text-[10px] text-slate-400">
+                      {formData.sonsCount > 0 || formData.daughtersCount > 0
+                        ? lang === 'ur' ? '1/6 حصہ (اولاد کی موجودگی)' : '1/6 share with children'
+                        : lang === 'ur' ? '1/3 حصہ (اولاد نہ ہونے پر)' : '1/3 share without children'}
+                    </div>
+                  </div>
+                  {formData.motherAlive && <Check className="w-4 h-4 text-emerald-400" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Grandparents Section */}
+            {(!formData.fatherAlive || !formData.motherAlive) && (
+              <div className="space-y-3 pt-2 border-t border-slate-800/80">
+                <span className="text-xs font-bold text-slate-300 block">{t.sectionGrandparents}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {!formData.fatherAlive && (
+                    <button
+                      type="button"
+                      onClick={() => updateField('paternalGrandfatherAlive', !formData.paternalGrandfatherAlive)}
+                      className={`p-2.5 rounded-xl border text-xs text-left transition ${
+                        formData.paternalGrandfatherAlive
+                          ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                          : 'bg-slate-900 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      {t.paternalGrandfatherLabel}: <strong>{formData.paternalGrandfatherAlive ? '✓' : '—'}</strong>
+                    </button>
+                  )}
+                  {!formData.motherAlive && !formData.fatherAlive && (
+                    <button
+                      type="button"
+                      onClick={() => updateField('paternalGrandmotherAlive', !formData.paternalGrandmotherAlive)}
+                      className={`p-2.5 rounded-xl border text-xs text-left transition ${
+                        formData.paternalGrandmotherAlive
+                          ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                          : 'bg-slate-900 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      {t.paternalGrandmotherLabel}: <strong>{formData.paternalGrandmotherAlive ? '✓' : '—'}</strong>
+                    </button>
+                  )}
+                  {!formData.motherAlive && (
+                    <button
+                      type="button"
+                      onClick={() => updateField('maternalGrandmotherAlive', !formData.maternalGrandmotherAlive)}
+                      className={`p-2.5 rounded-xl border text-xs text-left transition ${
+                        formData.maternalGrandmotherAlive
+                          ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                          : 'bg-slate-900 text-slate-400 border-slate-800'
+                      }`}
+                    >
+                      {t.maternalGrandmotherLabel}: <strong>{formData.maternalGrandmotherAlive ? '✓' : '—'}</strong>
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
 
-            {/* Net Estate Live Badge */}
-            {gross > 0 && (
-              <div className="mt-3 flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-950/40 border border-emerald-500/20">
-                <span className="text-xs font-semibold text-emerald-300">
-                  {t.netEstateCalculated}
-                </span>
-                <span className="text-sm font-bold text-emerald-400">
-                  {formatPKR(netPreview)}{' '}
-                  <span className="text-xs font-normal text-emerald-200">
-                    ({formatPKRWords(netPreview, lang)})
-                  </span>
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+            {/* Siblings Section */}
+            <div className="space-y-3 pt-2 border-t border-slate-800/80">
+              <span className="text-xs font-bold text-slate-300 block">{t.sectionSiblings}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-xs text-slate-200">{t.fullBrothersLabel}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => decrement('fullBrothersCount')}
+                      className="w-7 h-7 rounded bg-slate-800 text-slate-300 flex items-center justify-center"
+                    >
+                      -
+                    </button>
+                    <span className="w-5 text-center font-bold text-xs text-emerald-400">
+                      {formData.fullBrothersCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment('fullBrothersCount', 10)}
+                      className="w-7 h-7 rounded bg-slate-800 text-slate-300 flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
 
-        {/* Section 2: Surviving Spouse */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
-              <HeartHandshake className="w-5 h-5" />
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-xs text-slate-200">{t.fullSistersLabel}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => decrement('fullSistersCount')}
+                      className="w-7 h-7 rounded bg-slate-800 text-slate-300 flex items-center justify-center"
+                    >
+                      -
+                    </button>
+                    <span className="w-5 text-center font-bold text-xs text-emerald-400">
+                      {formData.fullSistersCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment('fullSistersCount', 10)}
+                      className="w-7 h-7 rounded bg-slate-800 text-slate-300 flex items-center justify-center"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionSpouse}</h2>
-              <p className="text-xs text-slate-400">
-                {formData.deceasedGender === 'male'
-                  ? lang === 'ur'
-                    ? 'متوفی کی بیوہ (یا بیک وقت 4 بیواؤں تک)'
-                    : 'Surviving wives (up to 4 wives legally allowed in Islamic law)'
-                  : lang === 'ur'
-                  ? 'متوفیہ کا شوہر'
-                  : 'Surviving husband'}
-              </p>
-            </div>
-          </div>
 
-          {formData.deceasedGender === 'male' ? (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.wifeCountLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur'
-                    ? 'اولاد ہونے پر 1/8، اولاد نہ ہونے پر 1/4 تمام بیواؤں میں برابر تقسیم ہوگا'
-                    : 'Fixed 1/8 share if children exist, or 1/4 if no children (shared equally)'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => decrement('wivesCount', 0)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-8 text-center text-sm font-bold text-emerald-400">
-                  {formData.wivesCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('wivesCount', 4)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.husbandLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur'
-                    ? 'اولاد ہونے پر 1/4، اولاد نہ ہونے پر 1/2 مقررہ حصہ'
-                    : 'Fixed 1/4 share if children exist, or 1/2 if no children'}
-                </p>
-              </div>
+            {/* Final Form Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
               <button
                 type="button"
-                onClick={() => updateField('husband', !formData.husband)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                  formData.husband
-                    ? 'bg-emerald-600 text-white shadow-glow'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700'
-                }`}
+                onClick={onReset}
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold border border-slate-700 transition"
               >
-                {formData.husband && <Check className="w-3.5 h-3.5" />}
-                {formData.husband
-                  ? lang === 'ur'
-                    ? 'جی ہاں (حیات ہیں)'
-                    : 'Yes (Surviving)'
-                  : lang === 'ur'
-                  ? 'نہیں (وفات پا چکے)'
-                  : 'No (Deceased)'}
+                {t.btnReset}
               </button>
-            </div>
-          )}
-        </div>
 
-        {/* Section 3: Surviving Children (Sons & Daughters) */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionChildren}</h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ur'
-                  ? 'بیٹے اور بیٹیاں عصبہ بالغیر کے طور پر 2:1 کے تناسب سے شریک ہوتے ہیں'
-                  : 'Sons & daughters inherit as residuaries with 2:1 ratio (Surah An-Nisa 4:11)'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Sons Counter */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.sonsCountLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur' ? 'عصبہ بالنفس / 2 حصے' : 'Residuary (2 Shares)'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => decrement('sonsCount', 0)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-8 text-center text-sm font-bold text-emerald-400">
-                  {formData.sonsCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('sonsCount', 20)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Daughters Counter */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.daughtersCountLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur'
-                    ? 'اکلوتی 1/2، دو یا زائد 2/3 (اگر بیٹا نہ ہو)'
-                    : '1/2 if single, 2/3 if 2+ (or 1 share with brothers)'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => decrement('daughtersCount', 0)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-8 text-center text-sm font-bold text-emerald-400">
-                  {formData.daughtersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('daughtersCount', 20)}
-                  className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 4: Surviving Parents */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center text-gold-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionParents}</h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ur'
-                  ? 'والدین کا مقررہ فرض اولاد ہونے پر 1/6 ہے'
-                  : 'Parents receive fixed 1/6 share in presence of children (Surah An-Nisa 4:11)'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Father Alive Toggle */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.fatherAliveLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur' ? '1/6 فرض یا عصبہ' : '1/6 or Residuary'}
-                </p>
-              </div>
               <button
-                type="button"
-                onClick={() => updateField('fatherAlive', !formData.fatherAlive)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  formData.fatherAlive
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700'
-                }`}
+                type="submit"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-glow flex items-center gap-2 transition transform active:scale-95"
               >
-                {formData.fatherAlive && <Check className="w-3 h-3" />}
-                {formData.fatherAlive
-                  ? lang === 'ur'
-                    ? 'حیات ہیں'
-                    : 'Alive'
-                  : lang === 'ur'
-                  ? 'وفات پا چکے'
-                  : 'Deceased'}
-              </button>
-            </div>
-
-            {/* Mother Alive Toggle */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900 border border-slate-800">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.motherAliveLabel}</span>
-                <p className="text-[11px] text-slate-500">
-                  {lang === 'ur' ? '1/6 (اولاد/بھائی) یا 1/3' : '1/6 (with kids/2+ sibs) or 1/3'}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => updateField('motherAlive', !formData.motherAlive)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                  formData.motherAlive
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700'
-                }`}
-              >
-                {formData.motherAlive && <Check className="w-3 h-3" />}
-                {formData.motherAlive
-                  ? lang === 'ur'
-                    ? 'حیات ہیں'
-                    : 'Alive'
-                  : lang === 'ur'
-                  ? 'وفات پا چکے'
-                  : 'Deceased'}
+                <Sparkles className="w-4 h-4 text-gold-300" />
+                <span>{t.btnCalculate}</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Section 5: Grandparents (Conditional Display / Assistance) */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionGrandparents}</h2>
-              <p className="text-xs text-slate-400">
-                {lang === 'ur'
-                  ? 'باپ کی موجودگی میں دادا، اور ماں کی موجودگی میں دادی/نانی محروم ہوتے ہیں'
-                  : 'Grandfather blocked by father; Grandmothers blocked by mother'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Grandfather (Dada) */}
-            <div
-              className={`p-3.5 rounded-xl border transition ${
-                formData.fatherAlive
-                  ? 'bg-slate-950/60 border-slate-800/60 opacity-60'
-                  : 'bg-slate-900 border-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-200">
-                  {t.paternalGrandfatherLabel}
-                </span>
-                <button
-                  type="button"
-                  disabled={formData.fatherAlive}
-                  onClick={() =>
-                    updateField('paternalGrandfatherAlive', !formData.paternalGrandfatherAlive)
-                  }
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                    formData.paternalGrandfatherAlive && !formData.fatherAlive
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-800 text-slate-400 border border-slate-700'
-                  }`}
-                >
-                  {formData.paternalGrandfatherAlive && !formData.fatherAlive ? 'Yes' : 'No'}
-                </button>
-              </div>
-              {formData.fatherAlive && (
-                <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1">
-                  <Info className="w-3 h-3 shrink-0" />
-                  <span>{lang === 'ur' ? 'والد کی حیات پر محروم' : 'Blocked by Father'}</span>
-                </p>
-              )}
-            </div>
-
-            {/* Paternal Grandmother (Dadi) */}
-            <div
-              className={`p-3.5 rounded-xl border transition ${
-                formData.motherAlive || formData.fatherAlive
-                  ? 'bg-slate-950/60 border-slate-800/60 opacity-60'
-                  : 'bg-slate-900 border-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-200">
-                  {t.paternalGrandmotherLabel}
-                </span>
-                <button
-                  type="button"
-                  disabled={formData.motherAlive || formData.fatherAlive}
-                  onClick={() =>
-                    updateField('paternalGrandmotherAlive', !formData.paternalGrandmotherAlive)
-                  }
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                    formData.paternalGrandmotherAlive &&
-                    !formData.motherAlive &&
-                    !formData.fatherAlive
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-800 text-slate-400 border border-slate-700'
-                  }`}
-                >
-                  {formData.paternalGrandmotherAlive &&
-                  !formData.motherAlive &&
-                  !formData.fatherAlive
-                    ? 'Yes'
-                    : 'No'}
-                </button>
-              </div>
-              {(formData.motherAlive || formData.fatherAlive) && (
-                <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1">
-                  <Info className="w-3 h-3 shrink-0" />
-                  <span>
-                    {lang === 'ur' ? 'والدہ/والد کی حیات پر محروم' : 'Blocked by Mother/Father'}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            {/* Maternal Grandmother (Nani) */}
-            <div
-              className={`p-3.5 rounded-xl border transition ${
-                formData.motherAlive
-                  ? 'bg-slate-950/60 border-slate-800/60 opacity-60'
-                  : 'bg-slate-900 border-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-200">
-                  {t.maternalGrandmotherLabel}
-                </span>
-                <button
-                  type="button"
-                  disabled={formData.motherAlive}
-                  onClick={() =>
-                    updateField('maternalGrandmotherAlive', !formData.maternalGrandmotherAlive)
-                  }
-                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition ${
-                    formData.maternalGrandmotherAlive && !formData.motherAlive
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-800 text-slate-400 border border-slate-700'
-                  }`}
-                >
-                  {formData.maternalGrandmotherAlive && !formData.motherAlive ? 'Yes' : 'No'}
-                </button>
-              </div>
-              {formData.motherAlive && (
-                <p className="text-[10px] text-amber-400 flex items-center gap-1 mt-1">
-                  <Info className="w-3 h-3 shrink-0" />
-                  <span>{lang === 'ur' ? 'والدہ کی حیات پر محروم' : 'Blocked by Mother'}</span>
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 6: Surviving Siblings (Brothers & Sisters) */}
-        <div className="glass-panel p-5 sm:p-6 rounded-2xl border border-slate-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">{t.sectionSiblings}</h2>
-              <p className="text-xs text-slate-400">
-                {formData.fatherAlive || formData.sonsCount > 0
-                  ? lang === 'ur'
-                    ? 'نوٹ: والد یا بیٹے کی موجودگی میں تمام بہن بھائی شرعاً محروم (محجوب) ہوتے ہیں'
-                    : 'Notice: Siblings are excluded (blocked) if Father or Son is alive'
-                  : lang === 'ur'
-                  ? 'حقیقی (سگے)، علاتی (باپ شریک)، اور اخیافی (ماں شریک) بہن بھائی'
-                  : 'Full siblings, Paternal siblings (same father), Maternal siblings (same mother)'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Full Brothers */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.fullBrothersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'حقیقی بھائی' : 'Full Brother'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('fullBrothersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.fullBrothersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('fullBrothersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Full Sisters */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.fullSistersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'حقیقی بہن' : 'Full Sister'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('fullSistersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.fullSistersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('fullSistersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Paternal Brothers */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.paternalBrothersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'علاتی بھائی' : 'Paternal Brother'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('paternalBrothersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.paternalBrothersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('paternalBrothersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Paternal Sisters */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.paternalSistersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'علاتی بہن' : 'Paternal Sister'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('paternalSistersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.paternalSistersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('paternalSistersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Maternal Brothers */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.maternalBrothersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'اخیافی بھائی' : 'Maternal Brother'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('maternalBrothersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.maternalBrothersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('maternalBrothersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Maternal Sisters */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200">{t.maternalSistersLabel}</span>
-                <span className="block text-[10px] text-slate-500">
-                  {lang === 'ur' ? 'اخیافی بہن' : 'Maternal Sister'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => decrement('maternalSistersCount', 0)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-xs font-bold text-emerald-400">
-                  {formData.maternalSistersCount || 0}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => increment('maternalSistersCount', 20)}
-                  className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons: Calculate & Reset */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-          <button
-            type="submit"
-            className="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-glow flex items-center justify-center gap-2 transition-all transform active:scale-[0.99]"
-          >
-            <Calculator className="w-5 h-5" />
-            <span>{t.btnCalculate}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onReset}
-            className="w-full sm:w-auto py-4 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-semibold text-sm flex items-center justify-center gap-2 transition"
-          >
-            <RotateCcw className="w-4 h-4 text-slate-400" />
-            <span>{t.btnReset}</span>
-          </button>
-        </div>
+        )}
       </form>
     </div>
   );
