@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   MapPin,
   Navigation,
@@ -12,6 +12,11 @@ import {
   Compass,
   AlertCircle,
   CheckCircle2,
+  Circle,
+  ArrowRight,
+  Route,
+  Layers,
+  FileCheck2,
 } from 'lucide-react';
 import {
   nadraCenters,
@@ -28,6 +33,19 @@ export default function NadraLocator({ lang }) {
   const [userLocation, setUserLocation] = useState(null); // { lat, lng }
   const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
   const [locationError, setLocationError] = useState('');
+  const [activeStepTab, setActiveStepTab] = useState(1); // 1: UC -> 2: Mega -> 3: Succession -> 4: Revenue
+  const [completedSteps, setCompletedSteps] = useState({});
+
+  const toggleStepCompleted = (stepNum) => {
+    setCompletedSteps((prev) => {
+      const updated = { ...prev, [stepNum]: !prev[stepNum] };
+      // If completed, move to next step automatically
+      if (updated[stepNum] && stepNum < 4) {
+        setActiveStepTab(stepNum + 1);
+      }
+      return updated;
+    });
+  };
 
   // Handle GPS location detection
   const handleDetectLocation = () => {
@@ -52,14 +70,14 @@ export default function NadraLocator({ lang }) {
         };
         setUserLocation(coords);
         setLocationStatus('success');
-        setSelectedCity('all'); // Clear city filter to show purely sorted by distance
+        setSelectedCity('all');
       },
       (err) => {
         setLocationStatus('error');
         if (err.code === 1) {
           setLocationError(
             lang === 'ur'
-              ? 'لوکیشن کی اجازت نہیں دی گئی۔ برائے مہربانی براؤزر پرمیشن چیک کریں یا شہر منتخب کریں۔'
+              ? 'لوکیشن کی اجازت نہیں دی گئی۔ برائے مہربانی براؤزر پرمیشن چیک کریں یا نیچے شہر منتخب کریں۔'
               : 'Location permission denied. Please enable GPS in browser or choose your city below.'
           );
         } else {
@@ -74,57 +92,146 @@ export default function NadraLocator({ lang }) {
     );
   };
 
-  // Filter and sort centers by distance or city
-  const filteredCenters = nadraCenters
-    .map((center) => {
-      let distance = null;
-      if (userLocation) {
-        distance = calculateDistanceKm(
-          userLocation.lat,
-          userLocation.lng,
-          center.lat,
-          center.lng
-        );
-      }
-      return {
-        ...center,
-        distance,
-      };
-    })
-    .filter((center) => {
-      // City filter
-      if (selectedCity !== 'all' && center.city !== selectedCity) {
+  // Calculate distance for all centers
+  const centersWithDistance = nadraCenters.map((center) => {
+    let distance = null;
+    if (userLocation) {
+      distance = calculateDistanceKm(
+        userLocation.lat,
+        userLocation.lng,
+        center.lat,
+        center.lng
+      );
+    }
+    return {
+      ...center,
+      distance,
+    };
+  });
+
+  // Filter centers based on city and search query
+  const filteredByCityAndSearch = centersWithDistance.filter((center) => {
+    if (selectedCity !== 'all' && center.city !== selectedCity) {
+      return false;
+    }
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      const matchName = center.nameEn.toLowerCase().includes(q) || center.nameUr.includes(q);
+      const matchAddr = center.addressEn.toLowerCase().includes(q) || center.addressUr.includes(q);
+      const matchCity = center.city.toLowerCase().includes(q);
+      const matchServices = center.services.some((s) => s.toLowerCase().includes(q));
+      if (!matchName && !matchAddr && !matchCity && !matchServices) {
         return false;
       }
-      // Type filter
+    }
+    return true;
+  });
+
+  // Find the single closest center for each category
+  const closestMegaCenter = [...filteredByCityAndSearch]
+    .filter((c) => c.type === 'mega')
+    .sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999))[0];
+
+  const closestSuccessionCenter = [...filteredByCityAndSearch]
+    .filter((c) => c.type === 'succession')
+    .sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999))[0];
+
+  const closestRevenueCenter = [...filteredByCityAndSearch]
+    .filter((c) => c.type === 'revenue')
+    .sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999))[0];
+
+  // Full listing filtered by type as well
+  const filteredCenters = filteredByCityAndSearch
+    .filter((center) => {
       if (selectedType !== 'all' && center.type !== selectedType) {
         return false;
-      }
-      // Search query
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const matchName =
-          center.nameEn.toLowerCase().includes(q) || center.nameUr.includes(q);
-        const matchAddr =
-          center.addressEn.toLowerCase().includes(q) || center.addressUr.includes(q);
-        const matchCity = center.city.toLowerCase().includes(q);
-        const matchServices = center.services.some((s) => s.toLowerCase().includes(q));
-        if (!matchName && !matchAddr && !matchCity && !matchServices) {
-          return false;
-        }
       }
       return true;
     })
     .sort((a, b) => {
-      // Sort by distance if user location is active
       if (a.distance !== null && b.distance !== null) {
         return a.distance - b.distance;
       }
-      // Otherwise sort succession centers first
       if (a.type === 'succession' && b.type !== 'succession') return -1;
       if (b.type === 'succession' && a.type !== 'succession') return 1;
       return 0;
     });
+
+  // Roadmap Steps Definition
+  const journeySteps = [
+    {
+      stepNum: 1,
+      titleEn: '1st Stop: Nearest Union Council / Cantonment Office',
+      titleUr: 'پہلی منزل: قریبی یونین کونسل یا کنٹونمنٹ دفتر',
+      targetEn: 'Obtain NADRA Computerized Death Certificate',
+      targetUr: 'کمپیوٹرائزڈ ڈیتھ سرٹیفکیٹ کا حصول',
+      descEn:
+        'First essential stop: Report the demise at your local Union Council or Cantonment Board. Submit the graveyard burial slip and hospital death certificate to receive the computerized NADRA-linked death certificate.',
+      descUr:
+        'پہلا بنیادی قدم: ہسپتال کی رپورٹ اور قبرستان کی پرچی کے ساتھ قریبی یونین کونسل میں اندراج کروا کر کمپیوٹرائزڈ ڈیتھ سرٹیفکیٹ حاصل کریں۔',
+      timelineEn: '2 - 5 working days',
+      timelineUr: '2 سے 5 یوم',
+      docsNeededEn: ['Graveyard burial slip', 'Hospital death slip', 'Applicant CNIC copy'],
+      docsNeededUr: ['قبرستان کی پرچی', 'ہسپتال کی ڈیتھ رپورٹ', 'درخواست گزار کا شناختی کارڈ'],
+      closestOffice: null, // Generates dynamic local search link
+      searchQuery: `Union Council Office near ${
+        selectedCity !== 'all' ? selectedCity : 'my location'
+      }`,
+    },
+    {
+      stepNum: 2,
+      titleEn: '2nd Stop: Nearest NADRA Mega Center (24/7)',
+      titleUr: 'دوسری منزل: قریبی نادرا میگا سینٹر (24/7)',
+      targetEn: 'CNIC Cancellation & Family Registration Certificate (FRC)',
+      targetUr: 'شناختی کارڈ منسوخی اور ایف آر سی (خاندانی شجرہ)',
+      descEn:
+        'Second stop: Cancel the deceased’s CNIC/NICOP and obtain the Death Registration Certificate (DRC). Apply for the Family Registration Certificate (FRC - by birth & marriage) which officially lists all legal heirs.',
+      descUr:
+        'دوسرا قدم: نادرا میگا سینٹر میں متوفی کا شناختی کارڈ منسوخ کروائیں اور فیملی رجسٹریشن سرٹیفکیٹ (FRC) حاصل کریں جس میں تمام شرعی ورثاء کے نام درج ہوتے ہیں۔',
+      timelineEn: '1 - 3 working days (Mega Centers open 24/7)',
+      timelineUr: '1 سے 3 یوم (میگا سینٹرز 24 گھنٹے کھلے ہیں)',
+      docsNeededEn: ['Original CNIC of deceased', 'Computerized Death Certificate', 'CNICs of heirs'],
+      docsNeededUr: ['متوفی کا اصل شناختی کارڈ', 'کمپیوٹرائزڈ ڈیتھ سرٹیفکیٹ', 'ورثاء کے شناختی کارڈز'],
+      closestOffice: closestMegaCenter,
+      searchQuery: 'NADRA Mega Center',
+    },
+    {
+      stepNum: 3,
+      titleEn: '3rd Stop: Nearest NADRA Succession Facilitation Center',
+      titleUr: 'تیسری منزل: قریبی نادرا جانشینی سہولت مرکز',
+      targetEn: 'Succession Certificate & Letter of Administration (Act 2021)',
+      targetUr: 'جانشینی سرٹیفکیٹ اور لیٹر آف ایڈمنسٹریشن',
+      descEn:
+        'Third stop: Apply under the Succession Act 2021. All legal heirs provide biometric fingerprint verification. NADRA publishes a 14-day public notice in national newspapers, then issues digital QR-coded certificates for movable and immovable property.',
+      descUr:
+        'تیسرا قدم: نادرا جانشینی مرکز میں درخواست دیں۔ تمام ورثاء کا بائیومیٹرک فنگر پرنٹ ہوگا۔ اخبار میں 14 روزہ اشتہار کے بعد کیو آر کوڈ والا ڈیجیٹل سرٹیفکیٹ جاری ہوگا۔',
+      timelineEn: '15 - 20 working days',
+      timelineUr: '15 سے 20 یوم',
+      docsNeededEn: ['FRC from Step 2', 'Property documents / Bank account statements', 'Heirs biometrics'],
+      docsNeededUr: ['ایف آر سی (مرحلہ 2 سے)', 'جائیداد/بینک دستاویزات', 'تمام ورثاء کی بائیومیٹرک حاضری'],
+      closestOffice: closestSuccessionCenter,
+      searchQuery: 'NADRA Succession Facilitation Center',
+    },
+    {
+      stepNum: 4,
+      titleEn: '4th Stop: Nearest Arazi Record Center / Land Revenue Office',
+      titleUr: 'چوتھی منزل: قریبی اراضی ریکارڈ سینٹر / ریونیو دفتر',
+      targetEn: 'Intiqal-e-Wirasat (Final Property Mutation & Updated Fard)',
+      targetUr: 'انتقالِ وراثت اور نیا کمپیوٹرائزڈ فرد ملکیت',
+      descEn:
+        'Final stop: Present the NADRA Succession Certificate & FRC at the Arazi Record Center (PLRA) / CDA One-Window / KDA Civic Center. The Tehsildar / Revenue Officer sanctions the mutation and updates the land registry in all legal heirs’ names.',
+      descUr:
+        'آخری مرحلہ: نادرا جانشینی سرٹیفکیٹ اور ایف آر سی اراضی ریکارڈ سینٹر / سی ڈی اے / کے ڈی اے میں پیش کریں۔ ریونیو آفیسر شرعی حصوں کے مطابق جائیداد ورثاء کے نام منتقل کر کے نیا فرد جاری کرے گا۔',
+      timelineEn: '7 - 14 working days',
+      timelineUr: '7 سے 14 یوم',
+      docsNeededEn: ['NADRA Succession Certificate', 'Original Registry / Fard / Allotment Letter', 'FRC'],
+      docsNeededUr: ['نادرا جانشینی سرٹیفکیٹ', 'اصل فرد / بیع نامہ / الاٹمنٹ لیٹر', 'ایف آر سی'],
+      closestOffice: closestRevenueCenter,
+      searchQuery: 'Arazi Record Center PLRA',
+    },
+  ];
+
+  const currentJourneyStep = journeySteps.find((s) => s.stepNum === activeStepTab) || journeySteps[0];
 
   return (
     <div className="space-y-6">
@@ -134,21 +241,25 @@ export default function NadraLocator({ lang }) {
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2">
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-gold-400" />
-                <span>{lang === 'ur' ? 'جیو لوکیٹر و ایڈریس ڈائریکٹری' : 'Geo-Locator & Directory'}</span>
+                <Route className="w-3.5 h-3.5 text-gold-400" />
+                <span>
+                  {lang === 'ur'
+                    ? 'مرحلہ وار قانونی روڈ میپ و قریبی مراکز'
+                    : 'Step-by-Step Succession Route & Closest Stops'}
+                </span>
               </span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100">
               {lang === 'ur'
-                ? 'قریبی نادرا جانشینی سینٹرز اور اراضی ریکارڈ دفاتر'
-                : 'Find Nearest NADRA Succession Centers & Land Offices'}
+                ? 'آپ کی قانونی منزلیں: کہاں سے شروع کریں اور کہاں جائیں؟'
+                : 'Your Sequential Real-World Roadmap: Where to Go First'}
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               {lang === 'ur'
-                ? 'اپنے شہر یا موجودہ پوزیشن کی بنیاد پر قریبی نادرا جانشینی مراکز (Succession Centers)، 24 گھنٹے میگا سینٹرز اور اراضی ریکارڈ دفاتر کے پتے، اوقاتِ کار اور گوگل میپس نیویگیشن معلوم کریں۔'
-                : 'Locate certified NADRA Succession Facilitation Centers (for Letters of Administration & Succession Certificates under the 2021 Act), 24/7 Mega Centers, and Arazi Record Centers near you.'}
+                ? 'سب سے پہلے یونین کونسل سے ڈیتھ سرٹیفکیٹ، پھر نادرا میگا سینٹر سے ایف آر سی، پھر جانشینی مرکز سے سکسیشن سرٹیفکیٹ، اور آخر میں اراضی ریکارڈ سینٹر سے انتقالِ وراثت۔ آپ کے قریب ترین دفاتر نمایاں کر دیے گئے ہیں۔'
+                : 'Follow the 4 mandatory sequential stops: (1) Union Council $\\rightarrow$ (2) NADRA Mega Center $\\rightarrow$ (3) NADRA Succession Center $\\rightarrow$ (4) Arazi Record Center. The closest verified offices to you are highlighted below.'}
             </p>
           </div>
 
@@ -171,8 +282,8 @@ export default function NadraLocator({ lang }) {
                     ? 'لوکیشن معلوم ہو رہی ہے...'
                     : 'Locating nearest centers...'
                   : lang === 'ur'
-                  ? 'میری موجودہ لوکیشن سے تلاش کریں (GPS)'
-                  : 'Find Nearest to My Location (GPS)'}
+                  ? 'میری موجودہ لوکیشن سے فاصلہ نکالیں (GPS)'
+                  : 'Pinpoint Nearest Offices to Me (GPS)'}
               </span>
             </button>
 
@@ -181,8 +292,8 @@ export default function NadraLocator({ lang }) {
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>
                   {lang === 'ur'
-                    ? 'آپ کے فاصلے کے حساب سے ترتیب شدہ'
-                    : 'Sorted by shortest distance from you'}
+                    ? 'تمام دفاتر کے فاصلے معلوم کر لیے گئے ہیں'
+                    : 'Distances computed from your current location'}
                 </span>
               </span>
             )}
@@ -198,14 +309,301 @@ export default function NadraLocator({ lang }) {
         )}
       </div>
 
-      {/* Controls & Filters Bar */}
-      <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+      {/* 4-Step Interactive Progression Bar */}
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-gold-400" />
+            <span>
+              {lang === 'ur' ? 'قانونی مراحل کی ترتیب:' : 'Official Step-by-Step Order of Operations:'}
+            </span>
+          </span>
+          <span className="text-[11px] text-slate-400">
+            {Object.values(completedSteps).filter(Boolean).length} / 4{' '}
+            {lang === 'ur' ? 'مراحل مکمل' : 'completed'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          {journeySteps.map((step) => {
+            const isSelected = activeStepTab === step.stepNum;
+            const isDone = !!completedSteps[step.stepNum];
+
+            return (
+              <button
+                type="button"
+                key={step.stepNum}
+                onClick={() => setActiveStepTab(step.stepNum)}
+                className={`p-3.5 rounded-xl border text-left transition flex flex-col justify-between gap-2 relative overflow-hidden ${
+                  isSelected
+                    ? 'bg-gradient-to-br from-emerald-950/80 to-slate-900 border-emerald-400 shadow-glow'
+                    : isDone
+                    ? 'bg-slate-900/90 border-emerald-500/40 text-slate-300'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                        isDone
+                          ? 'bg-emerald-500 text-white'
+                          : isSelected
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {isDone ? '✓' : step.stepNum}
+                    </span>
+                    <span className="text-xs font-bold text-slate-200">
+                      {lang === 'ur'
+                        ? `مرحلہ ${step.stepNum}`
+                        : `Step ${step.stepNum}`}
+                    </span>
+                  </div>
+
+                  {isSelected && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                      {lang === 'ur' ? 'زیرِ غور' : 'Active'}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-bold text-slate-100 line-clamp-1">
+                    {lang === 'ur' ? step.targetUr : step.targetEn}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                    {lang === 'ur' ? step.timelineUr : step.timelineEn}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Active Step Highlight & Nearest Office Spotlight */}
+      <div className="glass-panel p-6 sm:p-7 rounded-3xl border-2 border-emerald-500/30 shadow-glow space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+              {currentJourneyStep.stepNum}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-gold-400 uppercase tracking-wider">
+                  {lang === 'ur'
+                    ? `قانونی مرحلہ نمبر ${currentJourneyStep.stepNum}`
+                    : `Actionable Step ${currentJourneyStep.stepNum} of 4`}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+                  {lang === 'ur' ? currentJourneyStep.timelineUr : currentJourneyStep.timelineEn}
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-100 mt-0.5">
+                {lang === 'ur' ? currentJourneyStep.titleUr : currentJourneyStep.titleEn}
+              </h3>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => toggleStepCompleted(currentJourneyStep.stepNum)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+              completedSteps[currentJourneyStep.stepNum]
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700'
+            }`}
+          >
+            {completedSteps[currentJourneyStep.stepNum] ? (
+              <CheckCircle2 className="w-4 h-4 text-white" />
+            ) : (
+              <Circle className="w-4 h-4 text-slate-400" />
+            )}
+            <span>
+              {completedSteps[currentJourneyStep.stepNum]
+                ? lang === 'ur'
+                  ? 'یہ مرحلہ مکمل ہو گیا ہے ✓'
+                  : 'Marked as Completed ✓'
+                : lang === 'ur'
+                ? 'مرحلہ مکمل مارک کریں'
+                : 'Mark Step as Completed'}
+            </span>
+          </button>
+        </div>
+
+        {/* Step Details & Required Documents */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 space-y-4">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              {lang === 'ur' ? currentJourneyStep.descUr : currentJourneyStep.descEn}
+            </p>
+
+            {/* Checklist of what to take with you */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <FileCheck2 className="w-4 h-4" />
+                <span>
+                  {lang === 'ur'
+                    ? 'ساتھ لے جانے والی لازمی دستاویزات:'
+                    : 'Mandatory Documents to take with you:'}
+                </span>
+              </span>
+              <ul className="space-y-1.5 pt-1">
+                {(lang === 'ur'
+                  ? currentJourneyStep.docsNeededUr
+                  : currentJourneyStep.docsNeededEn
+                ).map((doc, idx) => (
+                  <li
+                    key={idx}
+                    className="text-xs text-slate-200 flex items-center gap-2"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span>{doc}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Pinned Closest Office Spotlight Card */}
+          <div className="lg:col-span-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gold-400 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4" />
+                <span>
+                  {lang === 'ur'
+                    ? 'آپ کے لیے تجویز کردہ قریبی ترین دفتر:'
+                    : 'Recommended Nearest Office for this Step:'}
+                </span>
+              </span>
+            </div>
+
+            {currentJourneyStep.closestOffice ? (
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-gold-500/40 shadow-glow-gold space-y-3 relative overflow-hidden">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 font-bold border border-gold-500/30 uppercase tracking-wider">
+                    {lang === 'ur' ? 'قریب ترین مرکز' : 'Closest Verified Center'}
+                  </span>
+
+                  {currentJourneyStep.closestOffice.distance !== null && (
+                    <span className="text-xs font-extrabold text-emerald-400 px-2 py-0.5 rounded-lg bg-emerald-950/80 border border-emerald-500/30">
+                      📍 {currentJourneyStep.closestOffice.distance} km away
+                    </span>
+                  )}
+                </div>
+
+                <h4 className="text-sm font-bold text-slate-100">
+                  {lang === 'ur'
+                    ? currentJourneyStep.closestOffice.nameUr
+                    : currentJourneyStep.closestOffice.nameEn}
+                </h4>
+
+                <p className="text-xs text-slate-300 leading-relaxed flex items-start gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <span>
+                    {lang === 'ur'
+                      ? currentJourneyStep.closestOffice.addressUr
+                      : currentJourneyStep.closestOffice.addressEn}
+                  </span>
+                </p>
+
+                <div className="text-[11px] space-y-1 text-slate-400 pt-1 border-t border-slate-800">
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-gold-400" />
+                    <span>
+                      {lang === 'ur'
+                        ? currentJourneyStep.closestOffice.timingUr
+                        : currentJourneyStep.closestOffice.timingEn}
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{currentJourneyStep.closestOffice.helpline}</span>
+                  </p>
+                </div>
+
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    currentJourneyStep.closestOffice.googleQuery
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition"
+                >
+                  <span>{lang === 'ur' ? 'گوگل میپس پر راستہ دیکھیں' : 'Get Directions on Google Maps'}</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 uppercase tracking-wider">
+                  {lang === 'ur' ? 'مقامی بلدیاتی ادارہ' : 'Local Municipality'}
+                </span>
+
+                <h4 className="text-sm font-bold text-slate-100">
+                  {lang === 'ur'
+                    ? 'متعلقہ یونین کونسل / کنٹونمنٹ بورڈ'
+                    : 'Concerned Union Council / Cantonment Directorate'}
+                </h4>
+
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {lang === 'ur'
+                    ? 'ڈیتھ سرٹیفکیٹ کا اندراج اس یونین کونسل کے دائرہ اختیار میں ہوتا ہے جہاں متوفی کی رہائش تھی یا جہاں تدفین عمل میں آئی۔'
+                    : 'Death registration must be initiated at the specific Union Council office corresponding to the deceased’s residential ward or cemetery jurisdiction.'}
+                </p>
+
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    currentJourneyStep.searchQuery
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center justify-center gap-1.5"
+                >
+                  <span>
+                    {lang === 'ur'
+                      ? 'قریبی یونین کونسل گوگل میپس پر تلاش کریں'
+                      : 'Find Nearest Union Council on Google Maps'}
+                  </span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Full Directory Search & Directory Explorer */}
+      <div className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              <span>
+                {lang === 'ur'
+                  ? 'تمام نادرا جانشینی سینٹرز و اراضی دفاتر کی مکمل فہرست'
+                  : 'Browse All NADRA Succession Centers & Land Registry Offices'}
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {lang === 'ur'
+                ? 'شہر اور دفتر کی قسم کے مطابق تلاش کریں'
+                : 'Filter by city or specific facility type across Pakistan'}
+            </p>
+          </div>
+
+          <span className="text-xs font-bold text-slate-400">
+            {filteredCenters.length} {lang === 'ur' ? 'مراکز' : 'Centers'}
+          </span>
+        </div>
+
+        {/* City & Search Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          {/* City Selector */}
           <div className="sm:col-span-4 space-y-1">
-            <label className="block text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gold-400" />
-              <span>{lang === 'ur' ? 'شہر منتخب کریں:' : 'Select City / District:'}</span>
+            <label className="block text-[11px] font-bold text-slate-300">
+              {lang === 'ur' ? 'شہر منتخب کریں:' : 'City / District:'}
             </label>
             <select
               value={selectedCity}
@@ -224,11 +622,9 @@ export default function NadraLocator({ lang }) {
             </select>
           </div>
 
-          {/* Search Box */}
           <div className="sm:col-span-8 space-y-1">
-            <label className="block text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-              <Search className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{lang === 'ur' ? 'علاقہ، روڈ یا سروس تلاش کریں:' : 'Search locality, road, or service:'}</span>
+            <label className="block text-[11px] font-bold text-slate-300">
+              {lang === 'ur' ? 'تلاش کریں:' : 'Search by locality or keywords:'}
             </label>
             <div className="relative">
               <input
@@ -247,11 +643,8 @@ export default function NadraLocator({ lang }) {
           </div>
         </div>
 
-        {/* Center Type Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/80">
-          <span className="text-[11px] font-bold text-slate-400 mr-1">
-            {lang === 'ur' ? 'دفتر کی قسم:' : 'Filter Type:'}
-          </span>
+        {/* Type Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800">
           <button
             type="button"
             onClick={() => setSelectedType('all')}
@@ -280,7 +673,7 @@ export default function NadraLocator({ lang }) {
             onClick={() => setSelectedType('mega')}
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
               selectedType === 'mega'
-                ? 'bg-teal-600 text-white shadow-md'
+                ? 'bg-teal-600 text-white'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
             }`}
           >
@@ -292,152 +685,94 @@ export default function NadraLocator({ lang }) {
             onClick={() => setSelectedType('revenue')}
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
               selectedType === 'revenue'
-                ? 'bg-indigo-600 text-white shadow-md'
+                ? 'bg-indigo-600 text-white'
                 : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
             }`}
           >
             <Building2 className="w-3 h-3" />
-            <span>{lang === 'ur' ? 'اراضی ریکارڈ و ریونیو دفاتر' : 'Land Records / PLRA / KDA'}</span>
+            <span>{lang === 'ur' ? 'اراضی ریکارڈ / PLRA' : 'Land Records / PLRA'}</span>
           </button>
         </div>
-      </div>
 
-      {/* Centers Listing Cards */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold text-slate-400">
-            {lang === 'ur'
-              ? `${filteredCenters.length} تصدیق شدہ سرکاری مراکز دستیاب ہیں`
-              : `Found ${filteredCenters.length} verified facilitation centers`}
-          </span>
-          {userLocation && (
-            <span className="text-[11px] text-emerald-400 font-semibold">
-              📍 {lang === 'ur' ? 'قریب ترین مرکز سب سے اوپر ہے' : 'Sorted: Closest first'}
-            </span>
-          )}
-        </div>
-
-        {filteredCenters.length === 0 ? (
-          <div className="glass-panel p-10 rounded-2xl border border-slate-800 text-center space-y-2">
-            <Building2 className="w-10 h-10 text-slate-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-300">
-              {lang === 'ur' ? 'کوئی مرکز نہیں ملا' : 'No Centers Found matching criteria'}
-            </p>
-            <p className="text-xs text-slate-500">
-              {lang === 'ur'
-                ? 'برائے مہربانی فلٹرز یا تلاش کے الفاظ تبدیل کر کے دوبارہ کوشش کریں۔'
-                : 'Try clearing the search query or selecting "All Pakistan".'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredCenters.map((center) => (
-              <div
-                key={center.id}
-                className={`glass-panel p-5 rounded-2xl border transition flex flex-col justify-between gap-4 ${
-                  center.type === 'succession'
-                    ? 'border-gold-500/30 bg-slate-900/90 hover:border-gold-400'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-900/60'
-                }`}
-              >
-                <div className="space-y-3">
-                  {/* Card Header: Type Badge & Distance */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                          center.type === 'succession'
-                            ? 'bg-gold-500/20 text-gold-300 border border-gold-500/40'
-                            : center.type === 'mega'
-                            ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
-                            : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                        }`}
-                      >
-                        {center.type === 'succession'
-                          ? lang === 'ur'
-                            ? 'جانشینی سہولت مرکز'
-                            : 'Succession Center (Act 2021)'
-                          : center.type === 'mega'
-                          ? lang === 'ur'
-                            ? 'میگا سینٹر (24/7)'
-                            : 'NADRA Mega Center'
-                          : lang === 'ur'
-                          ? 'اراضی ریکارڈ / ریونیو'
-                          : 'Land Revenue Center'}
-                      </span>
-
-                      {center.is24_7 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
-                          24/7 Open
-                        </span>
-                      )}
-                    </div>
-
-                    {center.distance !== null && (
-                      <span className="text-xs font-extrabold text-emerald-400 px-2 py-0.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 shrink-0">
-                        📍 {center.distance} km
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Center Name */}
-                  <h3 className="text-sm font-extrabold text-slate-100">
-                    {lang === 'ur' ? center.nameUr : center.nameEn}
-                  </h3>
-
-                  {/* Address */}
-                  <p className="text-xs text-slate-300 flex items-start gap-1.5 leading-relaxed">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                    <span>{lang === 'ur' ? center.addressUr : center.addressEn}</span>
-                  </p>
-
-                  {/* Timing & Helpline */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <Clock className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-                      <span>{lang === 'ur' ? center.timingUr : center.timingEn}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-slate-300">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{center.helpline}</span>
-                    </div>
-                  </div>
-
-                  {/* Services Chips */}
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {center.services.map((srv, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800/90 text-slate-300 border border-slate-700/80"
-                      >
-                        ✓ {srv}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Card Actions: Open in Google Maps */}
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
-                  <span className="text-[10px] text-slate-400">
-                    {center.city} • {center.province.toUpperCase()}
+        {/* Directory Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {filteredCenters.map((center) => (
+            <div
+              key={center.id}
+              className={`p-5 rounded-2xl border transition flex flex-col justify-between gap-3 ${
+                center.type === 'succession'
+                  ? 'border-gold-500/30 bg-slate-900/90 hover:border-gold-400'
+                  : 'border-slate-800 hover:border-slate-700 bg-slate-900/60'
+              }`}
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                      center.type === 'succession'
+                        ? 'bg-gold-500/20 text-gold-300 border border-gold-500/40'
+                        : center.type === 'mega'
+                        ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+                        : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                    }`}
+                  >
+                    {center.type === 'succession'
+                      ? lang === 'ur'
+                        ? 'جانشینی مرکز'
+                        : 'Succession Center'
+                      : center.type === 'mega'
+                      ? '24/7 Mega Center'
+                      : 'Land Revenue Center'}
                   </span>
 
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      center.googleQuery
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-1.5 shadow-sm"
-                  >
-                    <span>{lang === 'ur' ? 'گوگل میپس پر راستہ دیکھیں' : 'Directions on Google Maps'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  {center.distance !== null && (
+                    <span className="text-xs font-extrabold text-emerald-400 px-2 py-0.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 shrink-0">
+                      📍 {center.distance} km
+                    </span>
+                  )}
+                </div>
+
+                <h4 className="text-sm font-bold text-slate-100">
+                  {lang === 'ur' ? center.nameUr : center.nameEn}
+                </h4>
+
+                <p className="text-xs text-slate-300 leading-relaxed flex items-start gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                  <span>{lang === 'ur' ? center.addressUr : center.addressEn}</span>
+                </p>
+
+                <div className="text-[11px] text-slate-400 space-y-0.5">
+                  <p className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-gold-400" />
+                    <span>{lang === 'ur' ? center.timingUr : center.timingEn}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{center.helpline}</span>
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                <span className="text-[10px] text-slate-400">
+                  {center.city} • {center.province.toUpperCase()}
+                </span>
+
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    center.googleQuery
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>{lang === 'ur' ? 'گوگل میپس پر دیکھیں' : 'Directions on Maps'}</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
