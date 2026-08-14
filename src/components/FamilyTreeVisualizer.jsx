@@ -1,37 +1,31 @@
 import React, { useState } from 'react';
 import {
-  User,
   Users,
-  Shield,
-  Sparkles,
+  User,
   Heart,
-  Ban,
+  Scale,
+  Sparkles,
+  BookOpen,
   Info,
   X,
+  Plus,
+  Minus,
   CheckCircle2,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  BookOpen,
-  Coins,
-  Crown,
-  Scale,
+  ShieldAlert,
 } from 'lucide-react';
 import { formatPKR } from '../utils/inheritanceCalculator';
 
 export default function FamilyTreeVisualizer({ formData, results, lang }) {
   const [selectedNode, setSelectedNode] = useState(null);
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'sharers' | 'residuaries' | 'blocked'
-  const [zoomLevel, setZoomLevel] = useState(1);
 
   if (!results || !results.heirsList) return null;
 
-  const { heirsList, blockedHeirs, netEstate, status } = results;
+  const { heirsList, blockedHeirs, netEstate } = results;
 
   const findHeir = (id) => heirsList.find((h) => h.id === id);
   const isBlocked = (key) => blockedHeirs && blockedHeirs.find((b) => b.key === key);
 
-  // Nodes extraction
+  // Extract Heirs
   const wife = findHeir('wife');
   const husband = findHeir('husband');
   const mother = findHeir('mother');
@@ -49,529 +43,392 @@ export default function FamilyTreeVisualizer({ formData, results, lang }) {
   const blockedNani = isBlocked('maternalGrandmother');
   const blockedSiblings = isBlocked('fullSiblings');
 
-  // Interactive Bubble Node Component
-  const TreeBubble = ({
-    title,
-    subtitle,
-    count = 1,
+  const hasParents = father || mother;
+  const hasGrandparents = dada || dadi || nani || blockedDada || blockedDadi || blockedNani;
+  const hasChildren = sons || daughters;
+  const hasSiblings = brothers || sisters || blockedSiblings;
+
+  // Sleek Node Component
+  const TreeNode = ({
+    name,
+    relation,
     fraction,
-    percentage,
+    percent,
     pkr,
     category,
-    categoryType, // 'deceased' | 'spouse' | 'sharer' | 'residuary' | 'blocked'
+    type = 'heir', // 'deceased' | 'spouse' | 'heir' | 'blocked'
     quranRef,
     ruleText,
-    isBlockedNode = false,
-    avatarEmoji = '👤',
+    count = 1,
   }) => {
-    const isDeceased = categoryType === 'deceased';
-    const isSharer = categoryType === 'sharer' || (category && category.includes('Fixed'));
-    const isResiduary = categoryType === 'residuary' || (category && category.includes('Residuary'));
-    const isSelected = selectedNode?.title === title;
+    const isDeceased = type === 'deceased';
+    const isBlockedNode = type === 'blocked';
+    const isSpouse = type === 'spouse';
+    const isSelected = selectedNode?.name === name;
 
-    // Filter visibility
-    if (filterMode === 'sharers' && !isSharer && !isDeceased) return null;
-    if (filterMode === 'residuaries' && !isResiduary && !isDeceased) return null;
-    if (filterMode === 'blocked' && !isBlockedNode) return null;
-
-    let ringColor = 'border-emerald-500/50 shadow-glow';
-    let badgeBg = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-    let gradientBg = 'from-emerald-950/80 via-slate-900 to-slate-950';
+    let borderClass = 'border-slate-800 hover:border-slate-700 bg-slate-900/90';
+    let badgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
     if (isDeceased) {
-      ringColor = 'border-gold-400 ring-4 ring-gold-500/20 shadow-glow-gold';
-      badgeBg = 'bg-gold-500/20 text-gold-300 border-gold-500/40';
-      gradientBg = 'from-slate-900 via-emerald-950 to-slate-900';
-    } else if (categoryType === 'spouse') {
-      ringColor = 'border-teal-400 ring-2 ring-teal-500/20';
-      badgeBg = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
-      gradientBg = 'from-teal-950/80 via-slate-900 to-slate-950';
-    } else if (isResiduary) {
-      ringColor = 'border-gold-500/60 ring-2 ring-gold-500/20 shadow-glow-gold';
-      badgeBg = 'bg-gold-500/20 text-gold-300 border-gold-500/30';
-      gradientBg = 'from-amber-950/70 via-slate-900 to-slate-950';
+      borderClass = 'border-amber-500/40 bg-gradient-to-b from-slate-900 via-slate-900 to-amber-950/30 ring-1 ring-amber-500/30';
+      badgeClass = 'bg-amber-500/10 text-amber-300 border-amber-500/20';
+    } else if (isSpouse) {
+      borderClass = 'border-teal-500/40 bg-slate-900/90 hover:border-teal-500/60';
+      badgeClass = 'bg-teal-500/10 text-teal-300 border-teal-500/20';
     } else if (isBlockedNode) {
-      ringColor = 'border-slate-700/60 opacity-60';
-      badgeBg = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
-      gradientBg = 'from-slate-900 via-slate-950 to-slate-950';
+      borderClass = 'border-slate-800 bg-slate-950/60 opacity-60';
+      badgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
+    } else if (category && category.includes('Residuary')) {
+      borderClass = 'border-gold-500/30 bg-slate-900/90 hover:border-gold-500/60';
+      badgeClass = 'bg-gold-500/10 text-gold-300 border-gold-500/20';
     }
 
     return (
       <div
         onClick={() =>
           setSelectedNode({
-            title,
-            subtitle,
-            count,
+            name,
+            relation,
             fraction,
-            percentage,
+            percent,
             pkr,
             category,
-            categoryType,
+            type,
             quranRef,
             ruleText,
-            isBlockedNode,
-            isDeceased,
+            count,
           })
         }
-        className={`group relative cursor-pointer p-4 rounded-3xl border transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 bg-gradient-to-b ${gradientBg} ${ringColor} ${
-          isSelected ? 'ring-4 ring-emerald-400 scale-105' : ''
-        } min-w-[170px] max-w-[210px] text-center shadow-xl backdrop-blur-md`}
+        className={`relative cursor-pointer select-none rounded-2xl border ${borderClass} ${
+          isSelected ? 'ring-2 ring-emerald-400 shadow-xl' : ''
+        } p-4 w-60 shadow-lg backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5`}
       >
-        {/* Floating Top Avatar Icon */}
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center text-sm shadow-md group-hover:border-emerald-400 transition">
-          {isDeceased ? '👑' : isBlockedNode ? '🛡️' : avatarEmoji}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass}`}>
+            {isDeceased
+              ? lang === 'ur' ? 'متوفی' : 'Deceased'
+              : isBlockedNode
+              ? lang === 'ur' ? 'حجب (محروم)' : 'Excluded (Mahjoob)'
+              : `${fraction} • ${percent}%`}
+          </span>
+
+          <span className="text-[10px] text-slate-400 font-medium truncate">
+            {relation}
+          </span>
         </div>
 
-        <div className="pt-2 space-y-1.5">
-          {/* Status Badge */}
-          <div className="flex items-center justify-center">
-            {isDeceased ? (
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold border ${badgeBg}`}>
-                {lang === 'ur' ? 'متوفی (مرکزی شجرہ)' : 'Deceased (Root)'}
-              </span>
-            ) : isBlockedNode ? (
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${badgeBg} flex items-center gap-1`}>
-                <Ban className="w-3 h-3" />
-                <span>{lang === 'ur' ? 'محروم (حجب)' : 'Excluded'}</span>
-              </span>
-            ) : (
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${badgeBg}`}>
-                {fraction ? `${fraction} • ${percentage}%` : lang === 'ur' ? 'وارث' : 'Legal Heir'}
+        <div className="space-y-1">
+          <div className="text-sm font-bold text-slate-100 flex items-center justify-between">
+            <span className="truncate">{name}</span>
+            {count > 1 && (
+              <span className="text-[10px] font-normal text-slate-400">
+                ×{count}
               </span>
             )}
           </div>
 
-          {/* Node Title */}
-          <h4 className="text-xs font-black text-slate-100 line-clamp-1">{title}</h4>
-          {subtitle && <p className="text-[10px] text-slate-400 truncate">{subtitle}</p>}
+          {!isDeceased && !isBlockedNode && (
+            <div className="pt-2 border-t border-slate-800/80 flex items-baseline justify-between text-xs">
+              <span className="text-[10px] text-slate-400">
+                {lang === 'ur' ? 'شرعی حصہ:' : 'Share:'}
+              </span>
+              <span className="font-extrabold text-emerald-400">
+                {formatPKR(pkr)}
+              </span>
+            </div>
+          )}
 
-          {/* Share Valuation if not deceased / blocked */}
-          {!isDeceased && !isBlockedNode && pkr > 0 && (
-            <div className="pt-1.5 border-t border-slate-800/80">
-              <p className="text-xs font-black text-gold-300">{formatPKR(pkr)}</p>
-              {count > 1 && (
-                <p className="text-[9px] text-slate-400">
-                  {lang === 'ur' ? `فی کس: ${formatPKR(pkr / count)}` : `Each: ${formatPKR(pkr / count)}`}
-                </p>
-              )}
+          {isDeceased && (
+            <div className="pt-2 border-t border-slate-800/80 flex items-baseline justify-between text-xs">
+              <span className="text-[10px] text-slate-400">
+                {lang === 'ur' ? 'خالص ترکہ:' : 'Net Estate:'}
+              </span>
+              <span className="font-extrabold text-amber-300">
+                {formatPKR(netEstate)}
+              </span>
             </div>
           )}
 
           {isBlockedNode && (
-            <div className="pt-1 border-t border-slate-800/80 text-[9.5px] text-rose-300">
-              {lang === 'ur' ? 'قریبی وارث کی وجہ سے محروم' : 'Blocked by closer heir'}
-            </div>
+            <p className="text-[10px] text-slate-500 pt-1 truncate">
+              {lang === 'ur' ? 'قریبی وارث کی موجودگی' : 'Excluded by closer heir'}
+            </p>
           )}
-        </div>
-
-        {/* Subtle click hint */}
-        <div className="absolute bottom-1 right-2 opacity-0 group-hover:opacity-100 transition text-[9px] text-slate-500">
-          🔍 {lang === 'ur' ? 'تفصیل' : 'Details'}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6 relative overflow-hidden">
-      {/* Visual Shajra Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-gold-400" />
-              <span>{lang === 'ur' ? 'شجرۂ نسب و فرائض' : 'Interactive Shajra-e-Nasab (Pedigree Tree)'}</span>
-            </span>
-          </div>
-          <h3 className="text-lg sm:text-xl font-black text-slate-100 mt-1">
-            {lang === 'ur'
-              ? 'خاندانی شجرہ اور شرعی حصص کا بصری نقشہ'
-              : 'Visual Family Pedigree & Heirship Network Graph'}
-          </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {lang === 'ur'
-              ? 'کسی بھی وارث کے ببل پر کلک کر کے قرآنی دلیل، حصہ اور مالیت دیکھیں۔'
-              : 'Click any family bubble node to inspect exact Quranic verses, fractional portions, and cash/land shares.'}
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Clean Tree Canvas Container */}
+      <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-slate-800/90 overflow-x-auto relative shadow-2xl">
+        <div className="min-w-[760px] flex flex-col items-center space-y-8 py-2">
 
-        {/* Tree Controls: Filter & Zoom */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 text-xs">
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                filterMode === 'all' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {lang === 'ur' ? 'سب ورثاء' : 'All Heirs'}
-            </button>
-            <button
-              onClick={() => setFilterMode('sharers')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                filterMode === 'sharers' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {lang === 'ur' ? 'قرآنی حصہ دار' : 'Fixed Sharers'}
-            </button>
-            <button
-              onClick={() => setFilterMode('residuaries')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition ${
-                filterMode === 'residuaries' ? 'bg-gold-600 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {lang === 'ur' ? 'عصبہ' : 'Residuaries'}
-            </button>
-          </div>
-
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setZoomLevel((z) => Math.max(0.8, z - 0.1))}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-200"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] font-bold text-slate-400 px-1">{Math.round(zoomLevel * 100)}%</span>
-            <button
-              onClick={() => setZoomLevel((z) => Math.min(1.2, z + 0.1))}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-200"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setZoomLevel(1)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-200"
-              title="Reset Zoom"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* SVG Canvas & Organic Tree Graph Container */}
-      <div className="overflow-x-auto pb-8 pt-4 rounded-2xl bg-slate-950/60 border border-slate-900 relative">
-        <div
-          style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
-          className="min-w-[820px] transition-transform duration-200 flex flex-col items-center space-y-10 py-4 px-6 relative"
-        >
-
-          {/* ================= TIER 1: GRANDPARENTS (Ancestral Roots) ================= */}
-          {(dada || dadi || nani || blockedDada || blockedDadi || blockedNani) && (
-            <div className="flex flex-col items-center space-y-3 relative z-10">
-              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
-                <span>🌱 {lang === 'ur' ? 'درجۂ اول: اجداد و جدات (دادا / دادی / نانی)' : 'Ancestral Roots: Grandparents'}</span>
-              </div>
-
-              <div className="flex items-center justify-center gap-6">
+          {/* ================= LEVEL 1: GRANDPARENTS (If surviving/relevant) ================= */}
+          {hasGrandparents && (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="flex items-center gap-6">
                 {(dada || blockedDada) && (
-                  <TreeBubble
-                    title={lang === 'ur' ? 'دادا (Dada)' : 'Paternal Grandfather'}
-                    subtitle={dada ? dada.categoryUr || dada.category : 'دادا'}
+                  <TreeNode
+                    name={lang === 'ur' ? 'دادا (Dada)' : 'Paternal Grandfather'}
+                    relation={lang === 'ur' ? 'باپ کا باپ' : 'Paternal Grandfather'}
                     fraction={dada?.fractionFormatted}
-                    percentage={dada?.percentage}
+                    percent={dada?.percentage}
                     pkr={dada?.totalPkr}
                     category={dada?.category}
-                    categoryType={dada ? 'sharer' : 'blocked'}
-                    quranRef="Hadith / Hanafi Qiyas"
+                    type={dada ? 'heir' : 'blocked'}
+                    quranRef="Hadith / Sunnah"
                     ruleText={dada?.ruleEn || blockedDada?.reasonEn}
-                    isBlockedNode={!dada && !!blockedDada}
-                    avatarEmoji="👴"
                   />
                 )}
+
                 {(dadi || blockedDadi) && (
-                  <TreeBubble
-                    title={lang === 'ur' ? 'دادی (Dadi)' : 'Paternal Grandmother'}
-                    subtitle={dadi ? dadi.categoryUr || dadi.category : 'دادی'}
+                  <TreeNode
+                    name={lang === 'ur' ? 'دادی (Dadi)' : 'Paternal Grandmother'}
+                    relation={lang === 'ur' ? 'باپ کی ماں' : 'Paternal Grandmother'}
                     fraction={dadi?.fractionFormatted}
-                    percentage={dadi?.percentage}
+                    percent={dadi?.percentage}
                     pkr={dadi?.totalPkr}
                     category={dadi?.category}
-                    categoryType={dadi ? 'sharer' : 'blocked'}
+                    type={dadi ? 'heir' : 'blocked'}
                     quranRef="Sunan Abi Dawud"
                     ruleText={dadi?.ruleEn || blockedDadi?.reasonEn}
-                    isBlockedNode={!dadi && !!blockedDadi}
-                    avatarEmoji="👵"
                   />
                 )}
+
                 {(nani || blockedNani) && (
-                  <TreeBubble
-                    title={lang === 'ur' ? 'نانی (Nani)' : 'Maternal Grandmother'}
-                    subtitle={nani ? nani.categoryUr || nani.category : 'نانی'}
+                  <TreeNode
+                    name={lang === 'ur' ? 'نانی (Nani)' : 'Maternal Grandmother'}
+                    relation={lang === 'ur' ? 'ماں کی ماں' : 'Maternal Grandmother'}
                     fraction={nani?.fractionFormatted}
-                    percentage={nani?.percentage}
+                    percent={nani?.percentage}
                     pkr={nani?.totalPkr}
                     category={nani?.category}
-                    categoryType={nani ? 'sharer' : 'blocked'}
+                    type={nani ? 'heir' : 'blocked'}
                     quranRef="Sunan Abi Dawud"
                     ruleText={nani?.ruleEn || blockedNani?.reasonEn}
-                    isBlockedNode={!nani && !!blockedNani}
-                    avatarEmoji="👵"
                   />
                 )}
               </div>
 
-              {/* Connecting Tree Branch Downward */}
-              <div className="w-1 h-8 bg-gradient-to-b from-slate-700 to-emerald-500 rounded-full"></div>
+              {/* Vertical Branch Line */}
+              <div className="w-px h-6 bg-slate-700"></div>
             </div>
           )}
 
-          {/* ================= TIER 2: PARENTS ================= */}
-          {(father || mother || formData.fatherAlive || formData.motherAlive) && (
-            <div className="flex flex-col items-center space-y-3 relative z-10">
-              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
-                <span>🌿 {lang === 'ur' ? 'درجۂ دوم: حیات والدین (ماں اور باپ)' : 'Tier 2: Surviving Parents'}</span>
-              </div>
-
-              <div className="flex items-center justify-center gap-8">
+          {/* ================= LEVEL 2: PARENTS ================= */}
+          {hasParents && (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="flex items-center gap-8">
                 {father && (
-                  <TreeBubble
-                    title={lang === 'ur' ? 'والد صاحب (Father)' : 'Father (Walid)'}
-                    subtitle={father.categoryUr || father.category}
+                  <TreeNode
+                    name={lang === 'ur' ? 'والد صاحب (Father)' : 'Father (Walid)'}
+                    relation={lang === 'ur' ? 'والد' : 'Father'}
                     fraction={father.fractionFormatted}
-                    percentage={father.percentage}
+                    percent={father.percentage}
                     pkr={father.totalPkr}
                     category={father.category}
-                    categoryType={father.category.includes('Residuary') ? 'residuary' : 'sharer'}
+                    type="heir"
                     quranRef="Surah An-Nisa (4:11)"
                     ruleText={father.ruleEn}
-                    avatarEmoji="👨"
                   />
                 )}
+
                 {mother && (
-                  <TreeBubble
-                    title={lang === 'ur' ? 'والدہ صاحبہ (Mother)' : 'Mother (Walidah)'}
-                    subtitle={mother.categoryUr || mother.category}
+                  <TreeNode
+                    name={lang === 'ur' ? 'والدہ صاحبہ (Mother)' : 'Mother (Walidah)'}
+                    relation={lang === 'ur' ? 'والدہ' : 'Mother'}
                     fraction={mother.fractionFormatted}
-                    percentage={mother.percentage}
+                    percent={mother.percentage}
                     pkr={mother.totalPkr}
                     category={mother.category}
-                    categoryType="sharer"
+                    type="heir"
                     quranRef="Surah An-Nisa (4:11)"
                     ruleText={mother.ruleEn}
-                    avatarEmoji="👩"
                   />
                 )}
               </div>
 
-              {/* Connecting Tree Trunk Downward */}
-              <div className="w-1.5 h-10 bg-gradient-to-b from-emerald-500 to-emerald-400 rounded-full shadow-glow"></div>
+              {/* Vertical Branch Line */}
+              <div className="w-px h-8 bg-slate-700"></div>
             </div>
           )}
 
-          {/* ================= TIER 3: DECEASED CORE & SPOUSE & SIBLINGS ================= */}
-          <div className="flex flex-col items-center space-y-3 relative z-10 w-full">
-            <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-gold-400">
-              <span>🌳 {lang === 'ur' ? 'مرکزی درجۂ وراثت: متوفی، شریکِ حیات و بہن بھائی' : 'Primary Tier: Deceased, Spouse & Siblings'}</span>
-            </div>
-
+          {/* ================= LEVEL 3: DECEASED & SPOUSE & SIBLINGS ================= */}
+          <div className="flex flex-col items-center space-y-6 w-full">
             <div className="flex items-center justify-center gap-6 flex-wrap">
-              {/* Collateral Siblings Branch */}
-              {(brothers || sisters || blockedSiblings) && (
-                <div className="p-3 rounded-3xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
+              {/* Siblings Collateral Branch */}
+              {hasSiblings && (
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-950/40 border border-slate-800/80">
                   {brothers && (
-                    <TreeBubble
-                      title={lang === 'ur' ? `حقیقی بھائی (${brothers.count})` : `Full Brothers (${brothers.count})`}
-                      subtitle={brothers.categoryUr || brothers.category}
-                      count={brothers.count}
+                    <TreeNode
+                      name={lang === 'ur' ? brothers.nameUr : brothers.nameEn}
+                      relation={lang === 'ur' ? 'سگے بھائی' : 'Full Brothers'}
                       fraction={brothers.fractionFormatted}
-                      percentage={brothers.percentage}
+                      percent={brothers.percentage}
                       pkr={brothers.totalPkr}
+                      count={brothers.count}
                       category={brothers.category}
-                      categoryType="residuary"
+                      type="heir"
                       quranRef="Surah An-Nisa (4:176)"
                       ruleText={brothers.ruleEn}
-                      avatarEmoji="🧔"
                     />
                   )}
+
                   {sisters && (
-                    <TreeBubble
-                      title={lang === 'ur' ? `حقیقی بہنیں (${sisters.count})` : `Full Sisters (${sisters.count})`}
-                      subtitle={sisters.categoryUr || sisters.category}
-                      count={sisters.count}
+                    <TreeNode
+                      name={lang === 'ur' ? sisters.nameUr : sisters.nameEn}
+                      relation={lang === 'ur' ? 'سگی بہنیں' : 'Full Sisters'}
                       fraction={sisters.fractionFormatted}
-                      percentage={sisters.percentage}
+                      percent={sisters.percentage}
                       pkr={sisters.totalPkr}
+                      count={sisters.count}
                       category={sisters.category}
-                      categoryType={sisters.category.includes('Residuary') ? 'residuary' : 'sharer'}
+                      type="heir"
                       quranRef="Surah An-Nisa (4:176)"
                       ruleText={sisters.ruleEn}
-                      avatarEmoji="🧕"
                     />
                   )}
+
                   {blockedSiblings && !brothers && !sisters && (
-                    <TreeBubble
-                      title={lang === 'ur' ? 'بہن بھائی' : 'Full Siblings'}
-                      subtitle={lang === 'ur' ? 'محروم (حجب)' : 'Mahjoob'}
-                      isBlockedNode={true}
+                    <TreeNode
+                      name={lang === 'ur' ? 'بہن بھائی' : 'Full Siblings'}
+                      relation={lang === 'ur' ? 'سگے بہن بھائی' : 'Siblings'}
+                      type="blocked"
                       ruleText={blockedSiblings.reasonEn}
-                      avatarEmoji="👥"
                     />
                   )}
                 </div>
               )}
 
-              {/* Central Glowing Deceased Bubble Node */}
-              <TreeBubble
-                title={
+              {/* The Deceased Core Node */}
+              <TreeNode
+                name={
                   formData.deceasedGender === 'male'
-                    ? lang === 'ur'
-                      ? 'مرحوم (متوفی)'
-                      : 'Deceased (Male)'
-                    : lang === 'ur'
-                    ? 'مرحومہ (متوفیہ)'
-                    : 'Deceased (Female)'
+                    ? lang === 'ur' ? 'مرحوم والد / شوہر' : 'Deceased (Male)'
+                    : lang === 'ur' ? 'مرحومہ والدہ / زوجہ' : 'Deceased (Female)'
                 }
-                subtitle={lang === 'ur' ? `خالص ترکہ: ${formatPKR(netEstate)}` : `Net Estate: ${formatPKR(netEstate)}`}
-                categoryType="deceased"
-                pkr={netEstate}
-                ruleText="Center Root: The deceased whose estate is distributed among the surviving legal heirs according to Islamic law (Fara'iz)."
+                relation={lang === 'ur' ? 'مورث (اصل جائیداد)' : 'Estate Owner'}
+                type="deceased"
+                ruleText="The deceased whose estate is distributed among legal heirs in accordance with Sunni/Hanafi Fara'iz jurisprudence."
               />
 
-              {/* Surviving Spouse Bubble */}
+              {/* Marriage Connector Line & Spouse */}
               {wife && (
-                <TreeBubble
-                  title={lang === 'ur' ? wife.nameUr : wife.nameEn}
-                  subtitle={wife.categoryUr || wife.category}
-                  count={wife.count}
-                  fraction={wife.fractionFormatted}
-                  percentage={wife.percentage}
-                  pkr={wife.totalPkr}
-                  category={wife.category}
-                  categoryType="spouse"
-                  quranRef="Surah An-Nisa (4:12)"
-                  ruleText={wife.ruleEn}
-                  avatarEmoji="🧕"
-                />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-px bg-teal-500/40"></div>
+                  <TreeNode
+                    name={lang === 'ur' ? wife.nameUr : wife.nameEn}
+                    relation={lang === 'ur' ? 'شریکِ حیات' : 'Wife / Widow'}
+                    fraction={wife.fractionFormatted}
+                    percent={wife.percentage}
+                    pkr={wife.totalPkr}
+                    count={wife.count}
+                    category={wife.category}
+                    type="spouse"
+                    quranRef="Surah An-Nisa (4:12)"
+                    ruleText={wife.ruleEn}
+                  />
+                </div>
               )}
+
               {husband && (
-                <TreeBubble
-                  title={lang === 'ur' ? 'شوہر (Husband)' : 'Husband (Shohar)'}
-                  subtitle={husband.categoryUr || husband.category}
-                  count={1}
-                  fraction={husband.fractionFormatted}
-                  percentage={husband.percentage}
-                  pkr={husband.totalPkr}
-                  category={husband.category}
-                  categoryType="spouse"
-                  quranRef="Surah An-Nisa (4:12)"
-                  ruleText={husband.ruleEn}
-                  avatarEmoji="🧔"
-                />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-px bg-teal-500/40"></div>
+                  <TreeNode
+                    name={lang === 'ur' ? 'شوہر (Shohar)' : 'Husband'}
+                    relation={lang === 'ur' ? 'شریکِ حیات' : 'Surviving Husband'}
+                    fraction={husband.fractionFormatted}
+                    percent={husband.percentage}
+                    pkr={husband.totalPkr}
+                    count={1}
+                    category={husband.category}
+                    type="spouse"
+                    quranRef="Surah An-Nisa (4:12)"
+                    ruleText={husband.ruleEn}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Connecting Tree Trunk Branch Downward to Descendants */}
-            {(sons || daughters) && (
-              <div className="w-2 h-10 bg-gradient-to-b from-emerald-400 to-teal-400 rounded-full shadow-glow"></div>
+            {/* Branching down to children */}
+            {hasChildren && (
+              <div className="flex flex-col items-center">
+                <div className="w-px h-8 bg-slate-700"></div>
+                <div className="w-32 h-px bg-slate-700"></div>
+              </div>
             )}
           </div>
 
-          {/* ================= TIER 4: CHILDREN & DESCENDANTS ================= */}
-          {(sons || daughters) && (
-            <div className="flex flex-col items-center space-y-3 relative z-10">
-              <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
-                <span>🍃 {lang === 'ur' ? 'درجۂ سوم: صلبی اولاد (بیٹے اور بیٹیاں — 2:1 کا شرعی تناسب)' : 'Tier 4: Descendants (Sons & Daughters — 2:1 Ratio)'}</span>
-              </div>
+          {/* ================= LEVEL 4: CHILDREN / DESCENDANTS ================= */}
+          {hasChildren && (
+            <div className="flex items-center justify-center gap-8 pt-2">
+              {sons && (
+                <TreeNode
+                  name={lang === 'ur' ? sons.nameUr : sons.nameEn}
+                  relation={lang === 'ur' ? 'صلبی بیٹے (2 حصے)' : 'Sons (2x Asabah)'}
+                  fraction={sons.fractionFormatted}
+                  percent={sons.percentage}
+                  pkr={sons.totalPkr}
+                  count={sons.count}
+                  category={sons.category}
+                  type="heir"
+                  quranRef="Surah An-Nisa (4:11)"
+                  ruleText={sons.ruleEn}
+                />
+              )}
 
-              <div className="flex items-center justify-center gap-8">
-                {sons && (
-                  <TreeBubble
-                    title={lang === 'ur' ? sons.nameUr : sons.nameEn}
-                    subtitle={sons.categoryUr || sons.category}
-                    count={sons.count}
-                    fraction={sons.fractionFormatted}
-                    percentage={sons.percentage}
-                    pkr={sons.totalPkr}
-                    category={sons.category}
-                    categoryType="residuary"
-                    quranRef="Surah An-Nisa (4:11)"
-                    ruleText={sons.ruleEn}
-                    avatarEmoji="👦"
-                  />
-                )}
-                {daughters && (
-                  <TreeBubble
-                    title={lang === 'ur' ? daughters.nameUr : daughters.nameEn}
-                    subtitle={daughters.categoryUr || daughters.category}
-                    count={daughters.count}
-                    fraction={daughters.fractionFormatted}
-                    percentage={daughters.percentage}
-                    pkr={daughters.totalPkr}
-                    category={daughters.category}
-                    categoryType={daughters.category.includes('Residuary') ? 'residuary' : 'sharer'}
-                    quranRef="Surah An-Nisa (4:11)"
-                    ruleText={daughters.ruleEn}
-                    avatarEmoji="👧"
-                  />
-                )}
-              </div>
+              {daughters && (
+                <TreeNode
+                  name={lang === 'ur' ? daughters.nameUr : daughters.nameEn}
+                  relation={lang === 'ur' ? 'صلبی بیٹیاں (1 حصہ)' : 'Daughters (1x share)'}
+                  fraction={daughters.fractionFormatted}
+                  percent={daughters.percentage}
+                  pkr={daughters.totalPkr}
+                  count={daughters.count}
+                  category={daughters.category}
+                  type="heir"
+                  quranRef="Surah An-Nisa (4:11)"
+                  ruleText={daughters.ruleEn}
+                />
+              )}
             </div>
           )}
 
         </div>
       </div>
 
-      {/* Popover / Node Inspector Drawer when a bubble is clicked */}
+      {/* Clean Bottom Inspector Card (On Node Click) */}
       {selectedNode && (
-        <div className="p-5 rounded-3xl bg-slate-900/95 border-2 border-emerald-500/40 shadow-glow relative animate-fadeIn space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                <Scale className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-extrabold text-slate-100">{selectedNode.title}</h4>
-                <p className="text-xs text-emerald-400 font-semibold">{selectedNode.subtitle}</p>
-              </div>
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-xl space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <span>{selectedNode.name}</span>
+                <span className="text-xs text-slate-400 font-normal">
+                  ({selectedNode.relation})
+                </span>
+              </h4>
+              {selectedNode.quranRef && (
+                <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                  <BookOpen className="w-3 h-3" />
+                  <span>{selectedNode.quranRef}</span>
+                </span>
+              )}
             </div>
 
             <button
               onClick={() => setSelectedNode(null)}
-              className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {!selectedNode.isDeceased && !selectedNode.isBlockedNode && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs">
-              <div>
-                <span className="text-[10px] text-slate-400 block">{lang === 'ur' ? 'حصہ (کسر):' : 'Fraction:'}</span>
-                <span className="font-extrabold text-emerald-400 text-sm">{selectedNode.fraction}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block">{lang === 'ur' ? 'فیصد:' : 'Percentage:'}</span>
-                <span className="font-bold text-slate-200">{selectedNode.percentage}%</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block">{lang === 'ur' ? 'کل رقم:' : 'Total PKR:'}</span>
-                <span className="font-extrabold text-gold-300">{formatPKR(selectedNode.pkr)}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 block">{lang === 'ur' ? 'فی کس حصہ:' : 'Per Person:'}</span>
-                <span className="font-semibold text-slate-200">
-                  {formatPKR(selectedNode.pkr / (selectedNode.count || 1))}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Islamic Jurisprudence basis & Quranic Ref */}
-          <div className="space-y-1 text-xs text-slate-300 pt-1 border-t border-slate-800">
-            {selectedNode.quranRef && (
-              <p className="font-bold text-emerald-300 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>{selectedNode.quranRef}</span>
-              </p>
-            )}
-            <p className="leading-relaxed text-slate-300">{selectedNode.ruleText}</p>
-          </div>
+          <p className="text-xs text-slate-300 leading-relaxed border-t border-slate-800 pt-2">
+            {selectedNode.ruleText}
+          </p>
         </div>
       )}
     </div>
