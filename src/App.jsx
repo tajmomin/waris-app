@@ -6,7 +6,7 @@ import PaperworkNavigator from './components/PaperworkNavigator';
 import NadraLocator from './components/NadraLocator';
 import PrintSummary from './components/PrintSummary';
 import DisclaimerFooter from './components/DisclaimerFooter';
-import { calculateInheritance } from './utils/inheritanceCalculator';
+import { calculateInheritance, formatPKR } from './utils/inheritanceCalculator';
 import { translations } from './translations/translations';
 import {
   FileSpreadsheet,
@@ -175,89 +175,49 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 no-print">
-        {/* Hero Banner with Islamic Ornamentation */}
-        <div className="glass-panel-emerald p-6 sm:p-8 rounded-3xl border border-emerald-500/20 shadow-glow relative overflow-hidden">
-          <div className="max-w-3xl space-y-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-gold-400" />
-                <span>{lang === 'ur' ? 'علم الفرائض اور انتقال اراضی' : 'Sunni / Hanafi Fara’iz Rules'}</span>
-              </span>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 no-print">
+        {/* Sleek, Non-Congested Hero Banner */}
+        <div className="glass-panel-emerald p-5 sm:p-7 rounded-3xl border border-emerald-500/20 shadow-glow relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div className="space-y-2 max-w-3xl">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30 flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5 text-gold-400" />
+                  <span>{lang === 'ur' ? 'اہلِ سنت • فقہ حنفی' : 'Sunni / Hanafi Fara’iz Rules'}</span>
+                </span>
+                <span className="text-xs text-slate-400 font-serif hidden sm:inline">
+                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                </span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                {lang === 'ur' ? (
+                  <span>وارث — اسلامی وراثت اور جائیداد کے قانونی انتقال کا رہنماء</span>
+                ) : (
+                  <span>Waris — Islamic Inheritance & Property Paperwork Navigator</span>
+                )}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                {lang === 'ur'
+                  ? 'متوفی کے ترکے کی شرعی تقسیم، خاندانی شجرہ، قریبی نادرا جانشینی سینٹرز، اور صوبائی انتقالِ اراضی کا مستند طریقہ کار۔'
+                  : 'Calculate precise Islamic estate shares, visualize family pedigree trees, divide physical properties, and locate nearest NADRA Succession Centers.'}
+              </p>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              {lang === 'ur' ? (
-                <span>
-                  وارث — شرعی وراثت اور جائیداد کی قانونی منتقلی کا رہنماء
-                </span>
-              ) : (
-                <span>
-                  Waris — Islamic Inheritance & Property Paperwork Navigator
-                </span>
-              )}
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              {lang === 'ur'
-                ? 'متوفی کے ترکے کی شرعی تقسیم، حسابی گوشوارہ، قریبی نادرا جانشینی سینٹرز، اور صوبائی انتقالِ اراضی کا مستند طریقہ کار۔'
-                : 'Calculate precise Islamic estate shares according to classical Hanafi Fara’iz rules, locate nearest NADRA Succession Centers, and navigate provincial mutation (Intiqal) paperwork.'}
-            </p>
-
-            {/* Tab Switcher Pills */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('calculator')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  activeTab === 'calculator'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
-                }`}
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>{t.navCalculator}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('results')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  activeTab === 'results'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
-                }`}
-              >
-                <Sparkles className="w-4 h-4 text-gold-400" />
-                <span>{t.navResults}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('paperwork')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  activeTab === 'paperwork'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>{t.navPaperwork}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('locator')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  activeTab === 'locator'
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
-                }`}
-              >
-                <Compass className="w-4 h-4 text-teal-400" />
-                <span>{t.navLocator}</span>
-              </button>
-            </div>
+            {/* Quick Live Net Estate Pill */}
+            {results && results.netEstate > 0 && (
+              <div className="shrink-0 flex items-center gap-3 bg-slate-900/90 p-3 sm:p-4 rounded-2xl border border-slate-800 shadow-md">
+                <div className="text-left sm:text-right">
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">
+                    {lang === 'ur' ? 'خالص ترکہ:' : 'Net Distributable Estate:'}
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-emerald-400">
+                    {formatPKR(results.netEstate)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -277,7 +237,7 @@ export default function App() {
 
             {/* Quick Live Results Snapshot on Desktop Sidebar */}
             <div className="lg:col-span-4 space-y-6">
-              <div className="sticky top-28 space-y-6">
+              <div className="sticky top-24 space-y-6">
                 <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">

@@ -5,22 +5,25 @@
 export const translations = {
   en: {
     appTitle: 'WARIS',
-    appSubtitle: 'Islamic Inheritance & Property Paperwork Navigator for Pakistani Families',
+    appSubtitle: 'Islamic Inheritance & Property Paperwork Navigator',
     appTagline: 'Sunni / Hanafi Fara’iz Calculator • Province-wise Property Mutation (Intiqal) & NADRA Locator',
     langToggle: 'اردو',
     legalDisclaimerHeader: 'Islamic Jurisprudence & Legal Disclaimer',
     legalDisclaimerBody:
       'This tool provides a general calculation based on classical Sunni (Hanafi) inheritance rules (Fara’iz) and Pakistani statutory land mutation guidelines. It is intended for educational and planning purposes and does NOT constitute a legal ruling (Fatwa) or formal court decree. In complex situations, minor heirs, or contested estates, always consult a qualified Islamic scholar (Mufti) and a licensed advocate of the High Court.',
-    navCalculator: '1. Family & Estate Calculator',
-    navResults: '2. Inheritance Results & Visualizer',
-    navPaperwork: '3. Property Paperwork Navigator',
-    navLocator: '4. Nearest NADRA Centers',
-    navTestCases: 'Quick Test Presets',
+    
+    // Clean, short navbar labels
+    navCalculator: 'Calculator',
+    navResults: 'Results & Shajra',
+    navPaperwork: 'Paperwork Guide',
+    navLocator: 'NADRA Locator',
+    navTestCases: 'Test Scenarios',
+    
     btnCalculate: 'Calculate Islamic Shares',
     btnReset: 'Reset Form',
-    btnPrint: 'Print Estate Summary',
-    btnExportPDF: 'Export Official Summary (PDF)',
-    btnViewAudit: 'View Jurisprudential Steps (Fatawa Basis)',
+    btnPrint: 'Print Summary',
+    btnExportPDF: 'Export PDF',
+    btnViewAudit: 'Jurisprudence Basis',
     
     // Presets
     presetStandard: 'Standard Family (Wife + 2 Sons + 1 Daughter)',
@@ -32,8 +35,8 @@ export const translations = {
     // Form Sections
     sectionDeceased: '1. Deceased Information & Net Estate',
     deceasedGenderLabel: 'Gender of the Deceased',
-    genderMale: 'Male (Deceased was a Father / Husband / Brother)',
-    genderFemale: 'Female (Deceased was a Mother / Wife / Sister)',
+    genderMale: 'Male (Deceased Father / Husband / Brother)',
+    genderFemale: 'Female (Deceased Mother / Wife / Sister)',
     grossEstateLabel: 'Total Gross Estate Value (PKR)',
     grossEstatePlaceholder: 'e.g. 10000000 (1 Crore PKR)',
     quickPkr50L: '50 Lakhs',
@@ -106,22 +109,25 @@ export const translations = {
   },
   ur: {
     appTitle: 'وارث',
-    appSubtitle: 'پاکستانی خاندانوں کے لیے اسلامی وراثت اور جائیداد کے قانونی انتقال کا رہنماء',
+    appSubtitle: 'اسلامی وراثت اور جائیداد کے قانونی انتقال کا رہنماء',
     appTagline: 'حنفی فقہ کے مطابق فرائض کا حسابی نظام • صوبہ وار انتقال اراضی و قریبی نادرا مراکز',
     langToggle: 'English',
     legalDisclaimerHeader: 'شرعی و قانونی تنبیہ (ڈسکلیمر)',
     legalDisclaimerBody:
       'یہ ویب ایپلیکیشن اہلِ سنت والجماعت (حنفی فقہ) کے مروجہ قواعدِ فرائض اور پاکستانی اراضی ایکٹ کے عمومی اصولوں کے تحت ابتدائی رہنمائی فراہم کرتی ہے۔ یہ کوئی باقاعدہ شرعی فتویٰ یا عدالتی فیصلہ نہیں ہے۔ پیچیدہ عائلی مسائل، نابالغ ورثاء، یا تنازعات کی صورت میں کسی مستند مفتی یا ہائی کورٹ کے وکیل سے لازمی رجوع فرمائیں۔',
-    navCalculator: '1. خاندانی معلومات اور ترکہ',
-    navResults: '2. شرعی حصص اور گرافکس',
-    navPaperwork: '3. انتقالِ جائیداد و کاغذی رہنماء',
-    navLocator: '4. قریبی نادرا سینٹرز (لوکیشن)',
-    navTestCases: 'مروجہ خاندانی مثالیں (ٹیسٹ پری سیٹس)',
+    
+    // Clean, short navbar labels
+    navCalculator: 'حساب کار',
+    navResults: 'نتائج و شجرہ',
+    navPaperwork: 'انتقالِ اراضی',
+    navLocator: 'نادرا مراکز',
+    navTestCases: 'ٹیسٹ مثالیں',
+    
     btnCalculate: 'شرعی حصص کا حساب لگائیں',
     btnReset: 'فارم ری سیٹ کریں',
-    btnPrint: 'وراثت نامہ پرنٹ کریں',
-    btnExportPDF: 'وراثت دستاویز (PDF) ڈاؤن لوڈ کریں',
-    btnViewAudit: 'فقہی مراحل اور دلائل دیکھیں',
+    btnPrint: 'پرنٹ وراثت نامہ',
+    btnExportPDF: 'ڈاؤن لوڈ PDF',
+    btnViewAudit: 'فقہی دلائل',
     
     // Presets
     presetStandard: 'عام گھرانہ (بیوہ + 2 بیٹے + 1 بیٹی)',
