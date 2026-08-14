@@ -261,7 +261,7 @@ export default function NadraLocator({ lang }) {
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               {lang === 'ur'
                 ? 'سب سے پہلے یونین کونسل، پھر نادرا میگا سینٹر، پھر جانشینی مرکز، اور آخر میں تحصیل اراضی ریکارڈ سینٹر (ARC) یا مختار کار دفتر۔ آپ کی موجودہ پوزیشن کے مطابق ہر مرحلے کا قریبی ترین دفتر نمایاں کر دیا گیا ہے۔'
-                : 'Follow the 4 real-world steps in exact order: (1) Union Council $\\rightarrow$ (2) NADRA Mega Center $\\rightarrow$ (3) NADRA Succession Center $\\rightarrow$ (4) Tehsil Arazi Record Center (ARC) / Mukhtiarkar. Your nearest verified office for each stop is highlighted below.'}
+                : 'Follow the 4 real-world steps in exact order: (1) Union Council → (2) NADRA Mega Center → (3) NADRA Succession Center → (4) Tehsil Arazi Record Center (ARC) / Mukhtiarkar. Your nearest verified office for each stop is highlighted below.'}
             </p>
           </div>
 
