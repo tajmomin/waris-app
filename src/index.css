@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-emerald-500 selection:text-white;
+  }
+}
+
+.urdu-text {
+  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', serif;
+  line-height: 2.2;
+}
+
+.quran-text {
+  font-family: 'Amiri', serif;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #10b981;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-emerald {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.25) 0%, rgba(15, 23, 42, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.glass-panel-gold {
+  background: linear-gradient(135deg, rgba(184, 138, 41, 0.15) 0%, rgba(15, 23, 42, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 169, 72, 0.25);
+}
+
+/* Print Stylesheet for clean official PDF / Printout */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt;
+  }
+
+  .no-print, nav, footer, button, .quick-presets, input[type="button"], .tabs-header {
+    display: none !important;
+  }
+
+  .glass-panel, .glass-panel-emerald, .glass-panel-gold {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+  }
+
+  .text-slate-100, .text-slate-200, .text-slate-300, .text-white {
+    color: #0f172a !important;
+  }
+
+  .text-slate-400, .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  .text-emerald-400, .text-emerald-300 {
+    color: #047857 !important;
+  }
+
+  .text-gold-400, .text-gold-300 {
+    color: #9b6c1f !important;
+  }
+
+  .bg-slate-900, .bg-slate-950, .bg-slate-800 {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    color: #0f172a !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+  }
+
+  .print-page-break {
+    page-break-before: always;
+  }
+}
