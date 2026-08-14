@@ -9,7 +9,7 @@
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-amber?style=for-the-badge)
 
-**A World-Class, AI-Powered Sharia Jurisprudence (Fara'iz) & Pakistani Legal Succession Platform**  
+**An AI-Powered Sharia Jurisprudence (Fara'iz) & Pakistani Legal Succession Platform**  
 *Turning decades-long civil court inheritance battles into a transparent 60-second resolution.*
 
 [🌟 Live Web App](https://waris-app.vercel.app) • [📖 Documentation](#-islamic-inheritance-hanafi-faraiz-engine) • [⚖️ Legal Framework](#-pakistani-legal--property-succession-framework) • [🤖 AI Counsel](#-ai-legal--shariah-counsel)
