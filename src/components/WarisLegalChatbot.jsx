@@ -220,6 +220,50 @@ function getInstantLegalResponse(query, results, formData, lang) {
   }
 }
 
+// Rich Markdown & Typography Formatter for Messages
+function renderFormattedContent(text, isUser) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, lineIdx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={lineIdx} className="h-1" />;
+        }
+
+        // Split by **bold** markdown tags
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+
+        return (
+          <p key={lineIdx} className="leading-relaxed">
+            {parts.map((part, partIdx) => {
+              if (part.startsWith('**') && part.endsWith('**')) {
+                const inner = part.slice(2, -2);
+                return (
+                  <strong
+                    key={partIdx}
+                    className={
+                      isUser
+                        ? 'font-bold text-white underline decoration-emerald-300/40'
+                        : 'font-bold text-emerald-300'
+                    }
+                  >
+                    {inner}
+                  </strong>
+                );
+              }
+              return part;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function WarisLegalChatbot({ formData, results, lang }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -461,7 +505,7 @@ export default function WarisLegalChatbot({ formData, results, lang }) {
                       : 'bg-slate-800/95 text-slate-200 border border-slate-700/60 rounded-tl-none shadow-black/20'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{msg.text}</p>
+                  {renderFormattedContent(msg.text, msg.sender === 'user')}
                   <span className="text-[9px] text-slate-400 block text-right mt-1.5 opacity-70">
                     {msg.timestamp}
                   </span>
