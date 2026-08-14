@@ -30,10 +30,12 @@ export function lcm(a, b) {
 
 // Helper to format fraction nicely
 export function formatFraction(numerator, denominator) {
-  if (numerator === 0) return '0';
-  const divisor = gcd(numerator, denominator);
-  const num = Math.round(numerator / divisor);
-  const den = Math.round(denominator / divisor);
+  if (!numerator || numerator === 0) return '0';
+  const numInt = Math.round(numerator);
+  const denInt = Math.round(denominator);
+  const divisor = gcd(numInt, denInt);
+  const num = numInt / divisor;
+  const den = denInt / divisor;
   if (den === 1) return `${num}`;
   return `${num}/${den}`;
 }
@@ -64,30 +66,6 @@ export function formatPKRWords(amount, lang = 'en') {
 
 /**
  * Main Calculation Function
- *
- * @param {Object} input
- * @param {string} input.deceasedGender - 'male' | 'female'
- * @param {number} [input.wivesCount=0] - 0 to 4 (if deceased is male)
- * @param {boolean} [input.husband=false] - (if deceased is female)
- * @param {number} [input.sonsCount=0]
- * @param {number} [input.daughtersCount=0]
- * @param {boolean} [input.fatherAlive=false]
- * @param {boolean} [input.motherAlive=false]
- * @param {boolean} [input.paternalGrandfatherAlive=false]
- * @param {boolean} [input.paternalGrandmotherAlive=false]
- * @param {boolean} [input.maternalGrandmotherAlive=false]
- * @param {number} [input.fullBrothersCount=0]
- * @param {number} [input.fullSistersCount=0]
- * @param {number} [input.paternalBrothersCount=0]
- * @param {number} [input.paternalSistersCount=0]
- * @param {number} [input.maternalBrothersCount=0]
- * @param {number} [input.maternalSistersCount=0]
- * @param {number} [input.grossEstate=0] - Total estate in PKR
- * @param {number} [input.funeralExpenses=0] - PKR
- * @param {number} [input.debts=0] - PKR
- * @param {number} [input.wasiyyah=0] - PKR (max 1/3 after debts)
- *
- * @returns {Object} Detailed calculation results with audit trail
  */
 export function calculateInheritance(input) {
   const {
@@ -145,19 +123,17 @@ export function calculateInheritance(input) {
     maternalSistersCount;
 
   // --- Step 2: Determine Blocking (Hujub) ---
-  // Grandfather blocked if Father alive
   const effectiveGrandfather = !fatherAlive && paternalGrandfatherAlive;
   if (paternalGrandfatherAlive && fatherAlive) {
     blockedHeirs.push({
       key: 'paternalGrandfather',
       nameEn: 'Paternal Grandfather (Dada)',
       nameUr: 'دادا',
-      reasonEn: 'Excluded (Mahjoob) because the Father is alive.',
+      reasonEn: 'Excluded (Mahjoob) because Father is alive.',
       reasonUr: 'والد کی موجودگی کی وجہ سے دادا محروم (حجب حرمان) ہیں۔',
     });
   }
 
-  // Grandmothers: blocked by Mother; Paternal Grandmother also blocked by Father
   let effectiveMaternalGrandmother = !motherAlive && maternalGrandmotherAlive;
   let effectivePaternalGrandmother = !motherAlive && !fatherAlive && paternalGrandmotherAlive;
 
@@ -184,8 +160,6 @@ export function calculateInheritance(input) {
     });
   }
 
-  // Siblings Blocking:
-  // All siblings blocked by Father or Son (or Grandfather in standard Hanafi ruling)
   const isSiblingsBlockedByAscendantOrDescendant = fatherAlive || hasSons || effectiveGrandfather;
 
   let effectiveFullBrothers = isSiblingsBlockedByAscendantOrDescendant ? 0 : fullBrothersCount;
@@ -206,7 +180,6 @@ export function calculateInheritance(input) {
     });
   }
 
-  // Paternal Siblings blocked if Full Brother is present or full sister is asabah ma'a ghayriha
   const isPaternalBlockedByFullBrothers = effectiveFullBrothers > 0;
   let effectivePaternalBrothers =
     isSiblingsBlockedByAscendantOrDescendant || isPaternalBlockedByFullBrothers
@@ -231,7 +204,6 @@ export function calculateInheritance(input) {
     });
   }
 
-  // Maternal Siblings: Blocked by any child (male or female), father, or grandfather
   const isMaternalBlocked = hasChildren || fatherAlive || effectiveGrandfather;
   let effectiveMaternalBrothers = isMaternalBlocked ? 0 : maternalBrothersCount;
   let effectiveMaternalSisters = isMaternalBlocked ? 0 : maternalSistersCount;
@@ -295,7 +267,6 @@ export function calculateInheritance(input) {
   }
 
   // 2. Mother
-  // Check Umariyatan (Gharawayn): Spouse + Father + Mother alive, NO children, NO multiple siblings (<2)
   const isUmariyatan =
     motherAlive &&
     fatherAlive &&
@@ -316,11 +287,11 @@ export function calculateInheritance(input) {
         relationUr: 'ماں',
         num,
         den,
-        ruleEn: `Gharawayn / Umariyatan Special Case: Mother receives 1/3 of the residue after spouse share (${
+        ruleEn: `Gharawayn / Umariyatan Special Case: Mother receives 1/3 of remainder (${
           deceasedGender === 'female' ? '1/6 of total' : '1/4 of total'
-        }) as decreed by Umar ibn al-Khattab (R.A.) and consensus of jurists so father receives double the mother's share.`,
-        ruleUr: `مسئلہ غراوین (عمریتین): حضرت عمر فاروقؓ کے فیصلے اور اجماع صحابہ کے مطابق شریکِ حیات کا حصہ نکالنے کے بعد باقی ماندہ کا 1/3 والدہ کو ملے گا (${
-          deceasedGender === 'female' ? 'کل ترکے کا 1/6' : 'کل ترکے کا 1/4'
+        }) so Father receives double her share.`,
+        ruleUr: `مسئلہ غراوین (عمریتین): حضرت عمر فاروقؓ کے فیصلے کے مطابق باقی ماندہ کا 1/3 حصہ والدہ کو ملا (${
+          deceasedGender === 'female' ? 'کل کا 1/6' : 'کل کا 1/4'
         })۔`,
         quranRef: 'Ijma of Sahaba / Umariyatan',
         type: 'fard',
@@ -343,7 +314,7 @@ export function calculateInheritance(input) {
             : 'Mother receives 1/3 share as there are no children and fewer than two siblings (Surah An-Nisa 4:11).',
         ruleUr:
           den === 6
-            ? 'اولاد یا دو یا دو سے زائد بہن بھائیوں کی موجودگی کی وجہ سے والدہ کا حصہ 1/6 ہے (سورۃ النساء 4:11)۔'
+            ? 'اولاد یا دو یا زائد بہن بھائیوں کی موجودگی کی وجہ سے والدہ کا حصہ 1/6 ہے (سورۃ النساء 4:11)۔'
             : 'اولاد نہ ہونے اور بہن بھائی دو سے کم ہونے پر والدہ کا مقررہ حصہ 1/3 ہے (سورۃ النساء 4:11)۔',
         quranRef: 'Surah An-Nisa (4:11)',
         type: 'fard',
@@ -351,7 +322,7 @@ export function calculateInheritance(input) {
     }
   }
 
-  // 3. Father (Fixed share portion if children exist)
+  // 3. Father (Fixed portion)
   if (fatherAlive) {
     if (hasSons) {
       fixedShares.push({
@@ -386,7 +357,7 @@ export function calculateInheritance(input) {
     }
   }
 
-  // 4. Paternal Grandfather (if father deceased)
+  // 4. Paternal Grandfather
   if (effectiveGrandfather) {
     if (hasSons) {
       fixedShares.push({
@@ -421,7 +392,7 @@ export function calculateInheritance(input) {
     }
   }
 
-  // 5. Grandmothers (if eligible)
+  // 5. Grandmothers
   if (effectiveMaternalGrandmother && effectivePaternalGrandmother) {
     fixedShares.push({
       key: 'grandmothers',
@@ -504,7 +475,7 @@ export function calculateInheritance(input) {
     }
   }
 
-  // 7. Full Sisters (when no children, no father, no grandfather, and no full brothers)
+  // 7. Full Sisters
   const isFullSisterAsabahWithDaughter =
     hasDaughtersOnly &&
     !hasSons &&
@@ -553,7 +524,7 @@ export function calculateInheritance(input) {
     }
   }
 
-  // 8. Paternal Sisters (Takmilat al-Thuluthayn or 1/2 or 2/3)
+  // 8. Paternal Sisters
   if (
     !hasChildren &&
     !fatherAlive &&
@@ -573,7 +544,7 @@ export function calculateInheritance(input) {
         num: 1,
         den: 6,
         ruleEn: 'Paternal sister(s) receive 1/6 to complete two-thirds (Takmilat ath-Thuluthayn) alongside one full sister.',
-        ruleUr: 'ایک حقیقی بہن کے ساتھ علاتی بہن کو تکمیل ثلثین (دو تہائی پورا کرنے) کے لیے 1/6 حصہ ملتا ہے۔',
+        ruleUr: 'ایک حقیقی بہن کے ساتھ علاتی بہن کو تکمیل ثلثین کے لیے 1/6 حصہ ملتا ہے۔',
         quranRef: 'Hanafi Jurisprudence (Takmilat al-Thuluthayn)',
         type: 'fard',
       });
@@ -666,7 +637,6 @@ export function calculateInheritance(input) {
   // --- Step 5: Check for Residuaries (Asabah) ---
   let residuaryGroup = null;
 
-  // Priority 1: Sons & Daughters (Asabah bi-Ghayriha)
   if (hasSons) {
     const sonWeight = 2;
     const daughterWeight = 1;
@@ -688,9 +658,7 @@ export function calculateInheritance(input) {
           : 'بیٹے باقی تمام ترکہ بطور عصبہ بالنفس برابر تقسیم کرتے ہیں۔',
       quranRef: 'Surah An-Nisa (4:11)',
     };
-  }
-  // Priority 2: Father as pure Asabah (if no children) or for surplus
-  else if (fatherAlive) {
+  } else if (fatherAlive) {
     residuaryGroup = {
       type: 'father_asabah',
       nameEn: 'Father (Walid - Residue)',
@@ -704,9 +672,7 @@ export function calculateInheritance(input) {
         : 'شریک حیات اور والدہ کے مقررہ حصے کے بعد باقی تمام ترکہ والد بطور عصبہ بالنفس پاتے ہیں۔',
       quranRef: 'Hadith (Sahih Bukhari 6732)',
     };
-  }
-  // Priority 3: Grandfather as Asabah (if father dead & no sons)
-  else if (effectiveGrandfather) {
+  } else if (effectiveGrandfather) {
     residuaryGroup = {
       type: 'grandfather_asabah',
       nameEn: 'Paternal Grandfather (Dada - Residue)',
@@ -716,9 +682,7 @@ export function calculateInheritance(input) {
       ruleUr: 'والد کی غیر موجودگی میں دادا باقی تمام ترکہ بطور عصبہ حاصل کرتے ہیں۔',
       quranRef: 'Hanafi Jurisprudence',
     };
-  }
-  // Priority 4: Full Brothers & Sisters (Asabah bi-Nafsihi or bi-Ghayriha)
-  else if (effectiveFullBrothers > 0) {
+  } else if (effectiveFullBrothers > 0) {
     const totalWeights = effectiveFullBrothers * 2 + effectiveFullSisters * 1;
     residuaryGroup = {
       type: 'full_siblings_asabah',
@@ -743,9 +707,7 @@ export function calculateInheritance(input) {
           : 'حقیقی بھائی باقی تمام ترکہ بطور عصبہ بالنفس پاتے ہیں۔',
       quranRef: 'Surah An-Nisa (4:176)',
     };
-  }
-  // Priority 5: Full Sisters as Asabah ma'a Ghayriha (with daughters)
-  else if (isFullSisterAsabahWithDaughter) {
+  } else if (isFullSisterAsabahWithDaughter) {
     residuaryGroup = {
       type: 'full_sisters_with_daughters_asabah',
       nameEn: `Full Sister(s) (${effectiveFullSisters} Asabah with Daughters)`,
@@ -757,9 +719,7 @@ export function calculateInheritance(input) {
         'حدیث نبویؐ "اجْعَلُوا الأَخَوَاتِ مَعَ الْبَنَاتِ عَصَبَةً" کے تحت حقیقی بہنیں بیٹیوں کے ساتھ باقی ترکے کی عصبہ بنتی ہیں۔',
       quranRef: 'Hadith (Sahih Bukhari 6742)',
     };
-  }
-  // Priority 6: Paternal Brothers & Sisters
-  else if (effectivePaternalBrothers > 0) {
+  } else if (effectivePaternalBrothers > 0) {
     const totalWeights = effectivePaternalBrothers * 2 + effectivePaternalSisters * 1;
     residuaryGroup = {
       type: 'paternal_siblings_asabah',
@@ -793,7 +753,7 @@ export function calculateInheritance(input) {
     auditSteps.push({
       title: 'عول (Awl - Proportional Reduction)',
       descEn: `The sum of Quranic fixed shares (${sumFixedNumerators}/${originalBase} = ${(sumFraction * 100).toFixed(2)}%) exceeds 100%. In accordance with Islamic jurisprudence established by Umar (R.A.) and consensus, the base denominator is increased from ${originalBase} to ${awlBase}. Each heir's portion is proportionally adjusted so that shares equal exactly 100%.`,
-      descUr: `مقررہ حصوں کا مجموعہ (${sumFixedNumerators}/${originalBase} = ${(sumFraction * 100).toFixed(2)}%) 100 فیصد سے تجاوز کر گیا۔ اجماع صحابہ کے تحت اصل مسئلہ کو ${originalBase} سے بڑھا کر ${awlBase} کر دیا گیا، تاکہ تمام ورثاء کا حصہ تناسب کے ساتھ برقرار رہے اور کسی کی حق تلفی نہ ہو۔`,
+      descUr: `مقررہ حصوں کا مجموعہ (${sumFixedNumerators}/${originalBase} = ${(sumFraction * 100).toFixed(2)}%) 100 فیصد سے تجاوز کر گیا۔ اجماع صحابہ کے تحت اصل مسئلہ کو ${originalBase} سے بڑھا کر ${awlBase} کر دیا گیا، تاکہ تمام ورثاء کا حصہ تناسب کے ساتھ برقرار رہے۔`,
     });
 
     fixedShares.forEach((s) => {
@@ -827,13 +787,15 @@ export function calculateInheritance(input) {
   // Case B: Normal with Residue (Sum <= 1 and Residuary exists)
   else if (residuaryGroup !== null) {
     status = 'normal';
-    const remainingFraction = Math.max(0, 1 - sumFraction);
+    const remNum = Math.max(0, commonDen - sumFixedNumerators);
+    const remDen = commonDen;
+    const remainingFraction = remNum / remDen;
     const remainingPkr = netEstate * remainingFraction;
 
     auditSteps.push({
       title: 'توزیع عصبہ (Residuary Distribution)',
-      descEn: `Fixed shares total: ${sumFixedNumerators}/${commonDen} (${(sumFraction * 100).toFixed(2)}%). Remaining residue: ${formatFraction(Math.round(remainingFraction * commonDen), commonDen)} (${(remainingFraction * 100).toFixed(2)}% or Rs. ${Math.round(remainingPkr).toLocaleString()}) distributed to Residuaries (${residuaryGroup.nameEn}).`,
-      descUr: `مقررہ حصوں کا مجموعہ: ${sumFixedNumerators}/${commonDen} (${(sumFraction * 100).toFixed(2)}%)۔ باقی ماندہ ترکہ: ${formatFraction(Math.round(remainingFraction * commonDen), commonDen)} (${(remainingFraction * 100).toFixed(2)}% یا ${Math.round(remainingPkr).toLocaleString()} روپے) بطور عصبہ (${residuaryGroup.nameUr}) کو دیا گیا۔`,
+      descEn: `Fixed shares total: ${sumFixedNumerators}/${commonDen} (${(sumFraction * 100).toFixed(2)}%). Remaining residue: ${formatFraction(remNum, remDen)} (${(remainingFraction * 100).toFixed(2)}% or Rs. ${Math.round(remainingPkr).toLocaleString()}) distributed to Residuaries (${residuaryGroup.nameEn}).`,
+      descUr: `مقررہ حصوں کا مجموعہ: ${sumFixedNumerators}/${commonDen} (${(sumFraction * 100).toFixed(2)}%)۔ باقی ماندہ ترکہ: ${formatFraction(remNum, remDen)} (${(remainingFraction * 100).toFixed(2)}% یا ${Math.round(remainingPkr).toLocaleString()} روپے) بطور عصبہ (${residuaryGroup.nameUr}) کو دیا گیا۔`,
     });
 
     // Add fixed sharers
@@ -864,16 +826,16 @@ export function calculateInheritance(input) {
       });
     });
 
-    // Distribute residue according to residuary group
+    // Distribute residue with exact integer fraction arithmetic
     if (residuaryGroup.type === 'children_asabah') {
       const { sonsCount, daughtersCount, totalWeights } = residuaryGroup;
-      const singleUnitFraction = remainingFraction / totalWeights;
 
       if (sonsCount > 0) {
-        const sonsTotalFraction = singleUnitFraction * 2 * sonsCount;
+        const sonsTotalNum = remNum * 2 * sonsCount;
+        const sonsTotalDen = remDen * totalWeights;
+        const sonsTotalFraction = sonsTotalNum / sonsTotalDen;
         const sonsTotalPkr = netEstate * sonsTotalFraction;
         const perSonPkr = sonsTotalPkr / sonsCount;
-        const perSonFraction = singleUnitFraction * 2;
 
         heirsList.push({
           id: 'sons',
@@ -884,12 +846,12 @@ export function calculateInheritance(input) {
           count: sonsCount,
           category: 'Residuary (Asabah bi-Nafsihi / bi-Ghayrihi)',
           categoryUr: 'عصبہ بالنفس / بالغیر',
-          fractionFormatted: formatFraction(Math.round(sonsTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(sonsTotalNum, sonsTotalDen),
           rawFraction: sonsTotalFraction,
           percentage: (sonsTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(sonsTotalPkr),
           perIndividualPkr: Math.round(perSonPkr),
-          perIndividualFraction: formatFraction(Math.round(perSonFraction * 100000), 100000),
+          perIndividualFraction: formatFraction(remNum * 2, remDen * totalWeights),
           perIndividualPercentage: ((sonsTotalFraction / sonsCount) * 100).toFixed(2),
           ruleEn: residuaryGroup.ruleEn,
           ruleUr: residuaryGroup.ruleUr,
@@ -898,10 +860,11 @@ export function calculateInheritance(input) {
       }
 
       if (daughtersCount > 0) {
-        const daughtersTotalFraction = singleUnitFraction * 1 * daughtersCount;
+        const daughtersTotalNum = remNum * 1 * daughtersCount;
+        const daughtersTotalDen = remDen * totalWeights;
+        const daughtersTotalFraction = daughtersTotalNum / daughtersTotalDen;
         const daughtersTotalPkr = netEstate * daughtersTotalFraction;
         const perDaughterPkr = daughtersTotalPkr / daughtersCount;
-        const perDaughterFraction = singleUnitFraction * 1;
 
         heirsList.push({
           id: 'daughters_asabah',
@@ -912,12 +875,12 @@ export function calculateInheritance(input) {
           count: daughtersCount,
           category: 'Residuary by Brother (Asabah bi-Ghayriha)',
           categoryUr: 'عصبہ بالغیر (بھائی کی وجہ سے)',
-          fractionFormatted: formatFraction(Math.round(daughtersTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(daughtersTotalNum, daughtersTotalDen),
           rawFraction: daughtersTotalFraction,
           percentage: (daughtersTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(daughtersTotalPkr),
           perIndividualPkr: Math.round(perDaughterPkr),
-          perIndividualFraction: formatFraction(Math.round(perDaughterFraction * 100000), 100000),
+          perIndividualFraction: formatFraction(remNum * 1, remDen * totalWeights),
           perIndividualPercentage: ((daughtersTotalFraction / daughtersCount) * 100).toFixed(2),
           ruleEn: 'Daughters inherit alongside brothers at half the brother share (Surah An-Nisa 4:11).',
           ruleUr: 'بیٹیاں بھائیوں کے ساتھ عصبہ بالغیر بن کر آدھا حصہ پاتی ہیں (سورۃ النساء 4:11)۔',
@@ -929,19 +892,20 @@ export function calculateInheritance(input) {
       if (hasDaughtersOnly) {
         const fardEntry = heirsList.find((h) => h.id === 'father_fard');
         if (fardEntry) {
-          const totalFatherFraction = fardEntry.rawFraction + remainingFraction;
-          const totalFatherPkr = fardEntry.totalPkr + fatherResiduePkr;
+          const fatherFixedNum = commonDen / 6;
+          const totalFatherNum = fatherFixedNum + remNum;
+          const totalFatherDen = commonDen;
+          const totalFatherFraction = totalFatherNum / totalFatherDen;
+          const totalFatherPkr = netEstate * totalFatherFraction;
+
           fardEntry.nameEn = 'Father (Walid - Fixed + Residue)';
           fardEntry.nameUr = 'والد (فرض + عصبہ)';
-          fardEntry.fractionFormatted = formatFraction(
-            Math.round(totalFatherFraction * commonDen),
-            commonDen
-          );
+          fardEntry.fractionFormatted = formatFraction(totalFatherNum, totalFatherDen);
           fardEntry.rawFraction = totalFatherFraction;
           fardEntry.percentage = (totalFatherFraction * 100).toFixed(2);
           fardEntry.totalPkr = Math.round(totalFatherPkr);
           fardEntry.perIndividualPkr = Math.round(totalFatherPkr);
-          fardEntry.ruleEn = `Father receives 1/6 fixed share (Rs. ${fardEntry.totalPkr.toLocaleString()}) PLUS remaining residue of Rs. ${Math.round(
+          fardEntry.ruleEn = `Father receives 1/6 fixed share PLUS remaining residue of Rs. ${Math.round(
             fatherResiduePkr
           ).toLocaleString()} as Asabah.`;
           fardEntry.ruleUr = `والد کو 1/6 مقررہ حصہ اور باقی ماندہ ${Math.round(
@@ -958,12 +922,12 @@ export function calculateInheritance(input) {
           count: 1,
           category: 'Primary Residuary (Asabah bi-Nafsihi)',
           categoryUr: 'عصبہ بالنفس',
-          fractionFormatted: formatFraction(Math.round(remainingFraction * commonDen), commonDen),
+          fractionFormatted: formatFraction(remNum, remDen),
           rawFraction: remainingFraction,
           percentage: (remainingFraction * 100).toFixed(2),
           totalPkr: Math.round(remainingPkr),
           perIndividualPkr: Math.round(remainingPkr),
-          perIndividualFraction: formatFraction(Math.round(remainingFraction * commonDen), commonDen),
+          perIndividualFraction: formatFraction(remNum, remDen),
           perIndividualPercentage: (remainingFraction * 100).toFixed(2),
           ruleEn: residuaryGroup.ruleEn,
           ruleUr: residuaryGroup.ruleUr,
@@ -974,16 +938,17 @@ export function calculateInheritance(input) {
       if (hasDaughtersOnly) {
         const fardEntry = heirsList.find((h) => h.id === 'grandfather_fard');
         if (fardEntry) {
-          const totalFraction = fardEntry.rawFraction + remainingFraction;
-          const totalPkr = fardEntry.totalPkr + remainingPkr;
+          const gfFixedNum = commonDen / 6;
+          const totalGfNum = gfFixedNum + remNum;
+          const totalGfDen = commonDen;
+          const totalGfFraction = totalGfNum / totalGfDen;
+          const totalPkr = netEstate * totalGfFraction;
+
           fardEntry.nameEn = 'Paternal Grandfather (Dada - Fixed + Residue)';
           fardEntry.nameUr = 'دادا (فرض + عصبہ)';
-          fardEntry.fractionFormatted = formatFraction(
-            Math.round(totalFraction * commonDen),
-            commonDen
-          );
-          fardEntry.rawFraction = totalFraction;
-          fardEntry.percentage = (totalFraction * 100).toFixed(2);
+          fardEntry.fractionFormatted = formatFraction(totalGfNum, totalGfDen);
+          fardEntry.rawFraction = totalGfFraction;
+          fardEntry.percentage = (totalGfFraction * 100).toFixed(2);
           fardEntry.totalPkr = Math.round(totalPkr);
           fardEntry.perIndividualPkr = Math.round(totalPkr);
         }
@@ -997,12 +962,12 @@ export function calculateInheritance(input) {
           count: 1,
           category: 'Residuary (Asabah)',
           categoryUr: 'عصبہ',
-          fractionFormatted: formatFraction(Math.round(remainingFraction * commonDen), commonDen),
+          fractionFormatted: formatFraction(remNum, remDen),
           rawFraction: remainingFraction,
           percentage: (remainingFraction * 100).toFixed(2),
           totalPkr: Math.round(remainingPkr),
           perIndividualPkr: Math.round(remainingPkr),
-          perIndividualFraction: formatFraction(Math.round(remainingFraction * commonDen), commonDen),
+          perIndividualFraction: formatFraction(remNum, remDen),
           perIndividualPercentage: (remainingFraction * 100).toFixed(2),
           ruleEn: residuaryGroup.ruleEn,
           ruleUr: residuaryGroup.ruleUr,
@@ -1011,11 +976,13 @@ export function calculateInheritance(input) {
       }
     } else if (residuaryGroup.type === 'full_siblings_asabah') {
       const { effectiveFullBrothers, effectiveFullSisters, totalWeights } = residuaryGroup;
-      const singleUnitFraction = remainingFraction / totalWeights;
 
       if (effectiveFullBrothers > 0) {
-        const broTotalFraction = singleUnitFraction * 2 * effectiveFullBrothers;
+        const broTotalNum = remNum * 2 * effectiveFullBrothers;
+        const broTotalDen = remDen * totalWeights;
+        const broTotalFraction = broTotalNum / broTotalDen;
         const broTotalPkr = netEstate * broTotalFraction;
+
         heirsList.push({
           id: 'fullBrothers',
           nameEn:
@@ -1027,15 +994,12 @@ export function calculateInheritance(input) {
           count: effectiveFullBrothers,
           category: 'Residuary (Asabah bi-Nafsihi)',
           categoryUr: 'عصبہ بالنفس',
-          fractionFormatted: formatFraction(Math.round(broTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(broTotalNum, broTotalDen),
           rawFraction: broTotalFraction,
           percentage: (broTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(broTotalPkr),
           perIndividualPkr: Math.round(broTotalPkr / effectiveFullBrothers),
-          perIndividualFraction: formatFraction(
-            Math.round(singleUnitFraction * 2 * 100000),
-            100000
-          ),
+          perIndividualFraction: formatFraction(remNum * 2, remDen * totalWeights),
           perIndividualPercentage: ((broTotalFraction / effectiveFullBrothers) * 100).toFixed(2),
           ruleEn: residuaryGroup.ruleEn,
           ruleUr: residuaryGroup.ruleUr,
@@ -1044,8 +1008,11 @@ export function calculateInheritance(input) {
       }
 
       if (effectiveFullSisters > 0) {
-        const sisTotalFraction = singleUnitFraction * 1 * effectiveFullSisters;
+        const sisTotalNum = remNum * 1 * effectiveFullSisters;
+        const sisTotalDen = remDen * totalWeights;
+        const sisTotalFraction = sisTotalNum / sisTotalDen;
         const sisTotalPkr = netEstate * sisTotalFraction;
+
         heirsList.push({
           id: 'fullSisters_asabah',
           nameEn:
@@ -1057,15 +1024,12 @@ export function calculateInheritance(input) {
           count: effectiveFullSisters,
           category: 'Residuary by Brother (Asabah bi-Ghayriha)',
           categoryUr: 'عصبہ بالغیر',
-          fractionFormatted: formatFraction(Math.round(sisTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(sisTotalNum, sisTotalDen),
           rawFraction: sisTotalFraction,
           percentage: (sisTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(sisTotalPkr),
           perIndividualPkr: Math.round(sisTotalPkr / effectiveFullSisters),
-          perIndividualFraction: formatFraction(
-            Math.round(singleUnitFraction * 1 * 100000),
-            100000
-          ),
+          perIndividualFraction: formatFraction(remNum * 1, remDen * totalWeights),
           perIndividualPercentage: ((sisTotalFraction / effectiveFullSisters) * 100).toFixed(2),
           ruleEn: 'Sisters inherit as residuaries with brothers at 2:1 ratio (Surah An-Nisa 4:176).',
           ruleUr: 'بہنیں بھائیوں کے ساتھ 2:1 کے تناسب سے عصبہ بنتی ہیں (سورۃ النساء 4:176)۔',
@@ -1075,6 +1039,7 @@ export function calculateInheritance(input) {
     } else if (residuaryGroup.type === 'full_sisters_with_daughters_asabah') {
       const sisTotalFraction = remainingFraction;
       const sisTotalPkr = remainingPkr;
+
       heirsList.push({
         id: 'fullSisters_with_daughters',
         nameEn:
@@ -1090,15 +1055,12 @@ export function calculateInheritance(input) {
         count: residuaryGroup.count,
         category: 'Residuary with Daughters (Asabah ma`a Ghayriha)',
         categoryUr: 'عصبہ مع الغیر',
-        fractionFormatted: formatFraction(Math.round(sisTotalFraction * 100000), 100000),
+        fractionFormatted: formatFraction(remNum, remDen),
         rawFraction: sisTotalFraction,
         percentage: (sisTotalFraction * 100).toFixed(2),
         totalPkr: Math.round(sisTotalPkr),
         perIndividualPkr: Math.round(sisTotalPkr / residuaryGroup.count),
-        perIndividualFraction: formatFraction(
-          Math.round((sisTotalFraction / residuaryGroup.count) * 100000),
-          100000
-        ),
+        perIndividualFraction: formatFraction(remNum, remDen * residuaryGroup.count),
         perIndividualPercentage: ((sisTotalFraction / residuaryGroup.count) * 100).toFixed(2),
         ruleEn: residuaryGroup.ruleEn,
         ruleUr: residuaryGroup.ruleUr,
@@ -1106,11 +1068,13 @@ export function calculateInheritance(input) {
       });
     } else if (residuaryGroup.type === 'paternal_siblings_asabah') {
       const { effectivePaternalBrothers, effectivePaternalSisters, totalWeights } = residuaryGroup;
-      const singleUnitFraction = remainingFraction / totalWeights;
 
       if (effectivePaternalBrothers > 0) {
-        const broTotalFraction = singleUnitFraction * 2 * effectivePaternalBrothers;
+        const broTotalNum = remNum * 2 * effectivePaternalBrothers;
+        const broTotalDen = remDen * totalWeights;
+        const broTotalFraction = broTotalNum / broTotalDen;
         const broTotalPkr = netEstate * broTotalFraction;
+
         heirsList.push({
           id: 'paternalBrothers',
           nameEn:
@@ -1122,15 +1086,12 @@ export function calculateInheritance(input) {
           count: effectivePaternalBrothers,
           category: 'Residuary (Asabah)',
           categoryUr: 'عصبہ',
-          fractionFormatted: formatFraction(Math.round(broTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(broTotalNum, broTotalDen),
           rawFraction: broTotalFraction,
           percentage: (broTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(broTotalPkr),
           perIndividualPkr: Math.round(broTotalPkr / effectivePaternalBrothers),
-          perIndividualFraction: formatFraction(
-            Math.round(singleUnitFraction * 2 * 100000),
-            100000
-          ),
+          perIndividualFraction: formatFraction(remNum * 2, remDen * totalWeights),
           perIndividualPercentage: ((broTotalFraction / effectivePaternalBrothers) * 100).toFixed(2),
           ruleEn: residuaryGroup.ruleEn,
           ruleUr: residuaryGroup.ruleUr,
@@ -1139,8 +1100,11 @@ export function calculateInheritance(input) {
       }
 
       if (effectivePaternalSisters > 0) {
-        const sisTotalFraction = singleUnitFraction * 1 * effectivePaternalSisters;
+        const sisTotalNum = remNum * 1 * effectivePaternalSisters;
+        const sisTotalDen = remDen * totalWeights;
+        const sisTotalFraction = sisTotalNum / sisTotalDen;
         const sisTotalPkr = netEstate * sisTotalFraction;
+
         heirsList.push({
           id: 'paternalSisters_asabah',
           nameEn:
@@ -1152,15 +1116,12 @@ export function calculateInheritance(input) {
           count: effectivePaternalSisters,
           category: 'Residuary (Asabah)',
           categoryUr: 'عصبہ',
-          fractionFormatted: formatFraction(Math.round(sisTotalFraction * 100000), 100000),
+          fractionFormatted: formatFraction(sisTotalNum, sisTotalDen),
           rawFraction: sisTotalFraction,
           percentage: (sisTotalFraction * 100).toFixed(2),
           totalPkr: Math.round(sisTotalPkr),
           perIndividualPkr: Math.round(sisTotalPkr / effectivePaternalSisters),
-          perIndividualFraction: formatFraction(
-            Math.round(singleUnitFraction * 1 * 100000),
-            100000
-          ),
+          perIndividualFraction: formatFraction(remNum * 1, remDen * totalWeights),
           perIndividualPercentage: ((sisTotalFraction / effectivePaternalSisters) * 100).toFixed(2),
           ruleEn: 'Paternal sisters inherit as residuaries with paternal brothers at 2:1 ratio.',
           ruleUr: 'علاتی بہنیں علاتی بھائیوں کے ساتھ 2:1 کے تناسب سے عصبہ بنتی ہیں۔',
@@ -1178,6 +1139,7 @@ export function calculateInheritance(input) {
     if (spouseShare && nonSpouseShares.length > 0) {
       const spousePortion = spouseShare.num / spouseShare.den;
       const spousePkr = netEstate * spousePortion;
+
       heirsList.push({
         id: spouseShare.key,
         nameEn: spouseShare.nameEn,
@@ -1199,28 +1161,32 @@ export function calculateInheritance(input) {
         quranRef: spouseShare.quranRef,
       });
 
-      const remainderForRadd = 1 - spousePortion;
+      const raddRemainderNum = spouseShare.den - spouseShare.num;
+      const raddRemainderDen = spouseShare.den;
+
       let nonSpouseSumNum = 0;
       let nonSpouseLcm = 1;
       nonSpouseShares.forEach((s) => {
         nonSpouseLcm = lcm(nonSpouseLcm, s.den);
       });
       nonSpouseShares.forEach((s) => {
-        nonSpouseSumNum += s.num * (nonSpouseLcm / s.den);
+        s.nonSpouseScaledNum = s.num * (nonSpouseLcm / s.den);
+        nonSpouseSumNum += s.nonSpouseScaledNum;
       });
 
       auditSteps.push({
         title: 'رد مع شریکِ حیات (Radd with Spouse)',
         descEn: `No residuary heir exists. Spouse receives fixed share (${spouseShare.num}/${spouseShare.den}). The remaining ${formatFraction(
-          Math.round(remainderForRadd * spouseShare.den),
-          spouseShare.den
+          raddRemainderNum,
+          raddRemainderDen
         )} is returned proportionally via Radd (رد) among remaining sharers according to Hanafi law and Pakistani courts.`,
         descUr: `کوئی عصبہ موجود نہیں ہے۔ شریک حیات کو مقررہ حصہ (${spouseShare.num}/${spouseShare.den}) دیا گیا، اور باقی ماندہ ترکہ دیگر ورثاء میں رد کے اصول کے تحت تقسیم کیا گیا۔`,
       });
 
       nonSpouseShares.forEach((s) => {
-        const weightInNonSpouse = (s.num * (nonSpouseLcm / s.den)) / nonSpouseSumNum;
-        const finalPortion = remainderForRadd * weightInNonSpouse;
+        const totalNum = raddRemainderNum * s.nonSpouseScaledNum;
+        const totalDen = raddRemainderDen * nonSpouseSumNum;
+        const finalPortion = totalNum / totalDen;
         const totalPkr = netEstate * finalPortion;
         const perIndividualPkr = totalPkr / s.count;
 
@@ -1233,15 +1199,12 @@ export function calculateInheritance(input) {
           count: s.count,
           category: 'Fixed Sharer + Radd (فرض مع الرد)',
           categoryUr: 'فرض مع الرد',
-          fractionFormatted: formatFraction(Math.round(finalPortion * 100000), 100000),
+          fractionFormatted: formatFraction(totalNum, totalDen),
           rawFraction: finalPortion,
           percentage: (finalPortion * 100).toFixed(2),
           totalPkr: Math.round(totalPkr),
           perIndividualPkr: Math.round(perIndividualPkr),
-          perIndividualFraction: formatFraction(
-            Math.round((finalPortion / s.count) * 100000),
-            100000
-          ),
+          perIndividualFraction: formatFraction(totalNum, totalDen * s.count),
           perIndividualPercentage: ((finalPortion / s.count) * 100).toFixed(2),
           ruleEn: `${s.ruleEn} (Increased from original share via Radd return).`,
           ruleUr: `${s.ruleUr} (رد کے اصول کے تحت حصہ بڑھایا گیا)۔`,
